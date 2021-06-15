@@ -1,0 +1,43 @@
+# Swap files
+*.sw*
+
+# Backup files
+*~
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac
+.DS_Store
+
+# Environments
+.condaenv
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter
+.ipynb_checkpoints
+
+# VSCode
+.vscode
+
+# PyCharm
+.idea
+
+# PyTorch Lightning
+lightning_logs/
+
+# Hydra
+outputs/

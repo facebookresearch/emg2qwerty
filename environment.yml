@@ -1,0 +1,25 @@
+# conda env create -f environment.yml
+name: emg2qwerty
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.8
+  - pytorch>=1.9.0
+  - pytorch-lightning>=1.3.5
+  - torchaudio>=0.9.0
+  - cudatoolkit>=10.2
+  - numpy
+  - h5py>=3.0
+  - python-levenshtein>=0.12.2
+  - unidecode
+  - pytest
+  - mypy
+  - black
+  - flake8
+  - pre-commit
+  - pip
+  - pip:
+    - hydra-core>=1.1.0
+    - omegaconf>=2.1.0

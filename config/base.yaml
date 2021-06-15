@@ -1,0 +1,27 @@
+defaults:
+  - transforms: log_mel
+  - model: tds_conv_ctc
+
+seed: 1701
+
+trainer:
+  max_epochs: 10
+  gpus: 2
+  accelerator: ddp
+
+callbacks:
+  - _target_: pytorch_lightning.callbacks.LearningRateMonitor
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    monitor: val_CER
+    mode: min
+    save_last: True
+    verbose: True
+
+data:
+  root: /private/home/viswanath/test
+  train_sessions:
+  - oss_data.hdf5
+  val_sessions:
+  - oss_data.hdf5
+  test_sessions:
+  - oss_data.hdf5
