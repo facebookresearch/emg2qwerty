@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import (Any, ClassVar, Dict, KeysView, List, Mapping, Optional,
                     Sequence, Tuple, Union)
 
@@ -62,7 +63,7 @@ class Emg2QwertySessionData:
     KEYSTROKES: ClassVar[str] = "keystrokes"
     PROMPTS: ClassVar[str] = "prompts"
 
-    hdf5_path: str
+    hdf5_path: Path
 
     def __post_init__(self) -> None:
         self._file = h5py.File(self.hdf5_path, "r")
@@ -364,7 +365,7 @@ class LabelData:
 class WindowedEmgDataset(torch.utils.data.Dataset):
     """TODO: docstring"""
 
-    hdf5_path: str
+    hdf5_path: Path
     window_length: Optional[int] = None
     stride: Optional[int] = None
     padding: Tuple[int, int] = (0, 0)

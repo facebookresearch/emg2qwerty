@@ -1,8 +1,9 @@
 defaults:
   - transforms: log_mel
   - model: tds_conv_ctc
+  - dataset: generic
 
-seed: 1701
+seed: 1501
 
 trainer:
   max_epochs: 10
@@ -17,11 +18,5 @@ callbacks:
     save_last: True
     verbose: True
 
-data:
-  root: /private/home/viswanath/test
-  train_sessions:
-  - oss_data.hdf5
-  val_sessions:
-  - oss_data.hdf5
-  test_sessions:
-  - oss_data.hdf5
+dataset:
+  root: /private/home/viswanath/emg2qwerty-data-2021-06-24

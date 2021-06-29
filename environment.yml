@@ -14,7 +14,10 @@ dependencies:
   - h5py>=3.0
   - python-levenshtein>=0.12.2
   - unidecode
+  - pandas
+  - pyyaml
   - pytest
+  - click
   - mypy
   - black
   - flake8
