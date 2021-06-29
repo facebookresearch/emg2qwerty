@@ -1,6 +1,7 @@
 import os
 import random
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, List, Tuple
 
 import hydra
@@ -8,7 +9,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 from hydra.utils import get_original_cwd, instantiate
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
 from torch import nn
 from torch.utils.data import ConcatDataset, DataLoader
 
@@ -23,9 +24,9 @@ from emg2qwerty.transforms import Transform
 class WindowedEmgDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        train_sessions: Sequence[str],
-        val_sessions: Sequence[str],
-        test_sessions: Sequence[str],
+        train_sessions: Sequence[Path],
+        val_sessions: Sequence[Path],
+        test_sessions: Sequence[Path],
         batch_size: int,
         num_dataloader_workers: int,
         train_window_length: int,
@@ -219,15 +220,14 @@ def main(config: DictConfig):
     # (see `pl_worker_init_fn()`).
     pl.seed_everything(config.seed, workers=True)
 
-    def _full_paths(root: str, paths: Sequence[str]) -> List[str]:
-        return [os.path.join(root, path) for path in paths]
+    # Dataset session paths
+    def _full_paths(root: str, dataset: ListConfig) -> List[Path]:
+        sessions = [session["session"] for session in dataset]
+        return [Path(root).joinpath(f"{session}.hdf5") for session in sessions]
 
-    def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
-        return transforms.Compose([instantiate(cfg) for cfg in configs])
-
-    train_sessions = _full_paths(config.data.root, config.data.train_sessions)
-    val_sessions = _full_paths(config.data.root, config.data.val_sessions)
-    test_sessions = _full_paths(config.data.root, config.data.test_sessions)
+    train_sessions = _full_paths(config.dataset.root, config.dataset.train)
+    val_sessions = _full_paths(config.dataset.root, config.dataset.val)
+    test_sessions = _full_paths(config.dataset.root, config.dataset.test)
 
     # Instantiate modules
     module = instantiate(config.module, _recursive_=False)
@@ -237,6 +237,9 @@ def main(config: DictConfig):
                               test_sessions=test_sessions)
 
     # Instantiate transforms
+    def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
+        return transforms.Compose([instantiate(cfg) for cfg in configs])
+
     data_module.train_transforms = _build_transform(config.transforms.train)
     data_module.val_transforms = _build_transform(config.transforms.val)
     data_module.test_transforms = _build_transform(config.transforms.test)
