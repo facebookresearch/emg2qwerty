@@ -1,0 +1,27 @@
+# @package _global_
+dataset:
+  train:
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-20-1624212652-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-22-1624404327-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-21-1624306452-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-22-1624406140-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-23-1624481309-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-23-1624483156-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-23-1624485024-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  val:
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-20-1624214717-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-20-1624210384-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  test:
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-21-1624308389-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+  - user: c0e2f4ca-42d3-490e-a775-8b041e8d4992
+    session: 2021-06-22-1624402500-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d

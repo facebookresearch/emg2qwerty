@@ -1,5 +1,4 @@
 # @package _global_
-
 transforms:
   train:
     - _target_: emg2qwerty.transforms.ToTensor

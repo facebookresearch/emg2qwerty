@@ -1,7 +1,7 @@
 defaults:
   - transforms: log_mel
   - model: tds_conv_ctc
-  - dataset: generic
+  - user: generic
 
 seed: 1501
 
