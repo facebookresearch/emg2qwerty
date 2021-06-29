@@ -1,5 +1,4 @@
 # @package _global_
-
 module:
   _target_: emg2qwerty.train.TDSConvCTCModule
   in_features: 512  # n_mels=32 * channels=16

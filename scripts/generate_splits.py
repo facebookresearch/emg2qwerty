@@ -4,11 +4,11 @@
 #
 # Essentially, this script does the following:
 # 1. Samples N users to be held-out for personalization.
-# 2. Generates N `personalized_user{n}.yaml` configs with train, val and test
-#    data from each of the N corresponding held-out users.
+# 2. Generates N `user{n}.yaml` configs with train, val and test data from
+#    each of the N corresponding held-out users.
 # 3. Generates a single `generic.yaml` config such that the train and val
 #    data are from all but the N held-out users, and the test data is the
-#    combined test data from the N `personalized_user{n}.yaml` configs.
+#    combined test data from each of the N `user{n}.yaml` configs.
 
 import os
 from pathlib import Path
@@ -83,7 +83,8 @@ def dump_split(train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame,
         return {k: df[fields].to_dict("records") for k, df in split.items()}
 
     with open(path, "w") as f:
-        yaml.safe_dump(_format_split(split), f, sort_keys=False)
+        f.write("# @package _global_\n")
+        yaml.safe_dump({"dataset": _format_split(split)}, f, sort_keys=False)
 
 
 @click.command()
@@ -143,10 +144,10 @@ def main(
     df = pd.read_csv(Path(dataset_root).joinpath("summary.csv"))
 
     # Sample users to be held-out for personalization and split the dataset
-    # into two - one with sessions excluding these users to build a
-    # generic (user-agnostic) model, and another with sessions belonging only
-    # to these users for cross-user (out-of-domain) evaluation of generic
-    # model as well as for building personalized (user-specific) models.
+    # into two - one with sessions excluding these users to benchmark generic
+    # (user-agnostic) modeling, and another with sessions belonging only to
+    # these users for cross-user (out-of-domain) evaluation of generic models
+    # as well as for benchmarking personalized (user-specific) models.
     test_users = sample_users(df,
                               n=n_test_users,
                               min_sessions=min_sessions_per_test_user,
@@ -174,19 +175,18 @@ def main(
 
     config_dir = Path(__file__).parents[1].joinpath('config')
 
-    # Dump generic model split
+    # Dump split for generic benchmark
     dump_split(generic_train,
                generic_val,
                personalized_test,
-               path=config_dir.joinpath("dataset/generic.yaml"))
+               path=config_dir.joinpath("user/generic.yaml"))
 
-    # Dump per-user personalized model splits
+    # Dump `n_test_users` splits for per-user personalization benchmarks
     for i, user in enumerate(test_users):
-        dump_split(
-            personalized_train[personalized_train["user"] == user],
-            personalized_val[personalized_val["user"] == user],
-            personalized_test[personalized_test["user"] == user],
-            path=config_dir.joinpath(f"dataset/personalized_user{i}.yaml"))
+        dump_split(personalized_train[personalized_train["user"] == user],
+                   personalized_val[personalized_val["user"] == user],
+                   personalized_test[personalized_test["user"] == user],
+                   path=config_dir.joinpath(f"user/user{i}.yaml"))
 
 
 if __name__ == "__main__":
