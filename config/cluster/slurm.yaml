@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - override /hydra/launcher: submitit_slurm
+
+hydra:
+  launcher:
+    nodes: ${trainer.num_nodes}
+    gpus_per_node: ${trainer.gpus}
+    tasks_per_node: 1
+    partition: learnfair
+
+hydra:
+  run:
+    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}

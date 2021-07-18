@@ -36,8 +36,6 @@ dmypy.json
 # PyCharm
 .idea
 
-# PyTorch Lightning
+# Logs and checkpoints
+logs/
 lightning_logs/
-
-# Hydra
-outputs/

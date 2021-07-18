@@ -6,9 +6,10 @@ defaults:
 seed: 1501
 
 trainer:
-  max_epochs: 10
+  num_nodes: 1
   gpus: 2
-  accelerator: ddp
+  accelerator: ddp_spawn
+  max_epochs: 10
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
@@ -20,3 +21,16 @@ callbacks:
 
 dataset:
   root: /private/home/viswanath/emg2qwerty-data-2021-06-24
+
+hydra:
+  run:
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}_${hydra.job.override_dirname}
+  job:
+    name: emg2qwerty
+    config:
+      override_dirname:
+        exclude_keys:
+          - cluster

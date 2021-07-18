@@ -203,7 +203,7 @@ class TDSConvCTCModule(pl.LightningModule):
 
 @hydra.main(config_path="../config", config_name="base")
 def main(config: DictConfig):
-    print('#### Config Dump ####')
+    print(f'#### Config ####:')
     print(OmegaConf.to_yaml(config))
 
     # Add working dir to PYTHONPATH
