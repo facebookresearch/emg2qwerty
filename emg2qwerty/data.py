@@ -373,12 +373,13 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     transform: Transform[np.ndarray, torch.Tensor] = transforms.ToTensor()
 
     def __post_init__(self):
-        self.session = Emg2QwertySessionData(self.hdf5_path)
-        assert self.session.condition == "on_keyboard", (
-            f"Unsupported condition {self.session.condition}")
+        with Emg2QwertySessionData(self.hdf5_path) as session:
+            assert session.condition == "on_keyboard", (
+                f"Unsupported condition {self.session.condition}")
+            self.session_length = len(session)
 
         if self.window_length is None:
-            self.window_length = len(self.session)
+            self.window_length = self.session_length
         if self.stride is None:
             self.stride = self.window_length
         assert self.window_length > 0 and self.stride > 0
@@ -387,9 +388,14 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
         assert self.left_padding >= 0 and self.right_padding >= 0
 
     def __len__(self) -> int:
-        return (len(self.session) - self.window_length) // self.stride + 1
+        return (self.session_length - self.window_length) // self.stride + 1
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        # Lazy init `Emg2QwertySessionData` per dataloading worker
+        # since `h5py.File` objects can't be picked
+        if not hasattr(self, 'session'):
+            self.session = Emg2QwertySessionData(self.hdf5_path)
+
         offset = idx * self.stride
 
         # Randomly jitter the window offset
