@@ -1,4 +1,6 @@
+import logging
 import os
+import pprint
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,6 +21,8 @@ from emg2qwerty.data import WindowedEmgDataset
 from emg2qwerty.metrics import CharacterErrorRate
 from emg2qwerty.modules import TDSConvEncoder
 from emg2qwerty.transforms import Transform
+
+log = logging.getLogger(__name__)
 
 
 class WindowedEmgDataModule(pl.LightningDataModule):
@@ -45,11 +49,12 @@ class WindowedEmgDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         self.train_dataset = ConcatDataset([
-            WindowedEmgDataset(hdf5_path,
-                               transform=self._train_transforms,
-                               window_length=self.train_window_length,
-                               padding=self.train_window_padding)
-            for hdf5_path in self.train_sessions
+            WindowedEmgDataset(
+                hdf5_path,
+                transform=self._train_transforms,
+                window_length=self.train_window_length,
+                padding=self.train_window_padding,
+            ) for hdf5_path in self.train_sessions
         ])
         self.val_dataset = ConcatDataset([
             WindowedEmgDataset(hdf5_path, transform=self._val_transforms)
@@ -61,28 +66,34 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         ])
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self.train_dataset,
-                          batch_size=self.batch_size,
-                          num_workers=self.num_dataloader_workers,
-                          collate_fn=WindowedEmgDataset.collate,
-                          pin_memory=True,
-                          shuffle=True)
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_dataloader_workers,
+            collate_fn=WindowedEmgDataset.collate,
+            pin_memory=True,
+            shuffle=True,
+        )
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self.val_dataset,
-                          batch_size=self.batch_size,
-                          num_workers=self.num_dataloader_workers,
-                          collate_fn=WindowedEmgDataset.collate,
-                          pin_memory=True,
-                          shuffle=False)
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_dataloader_workers,
+            collate_fn=WindowedEmgDataset.collate,
+            pin_memory=True,
+            shuffle=False,
+        )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self.test_dataset,
-                          batch_size=self.batch_size,
-                          num_workers=self.num_dataloader_workers,
-                          collate_fn=WindowedEmgDataset.collate,
-                          pin_memory=True,
-                          shuffle=False)
+        return DataLoader(
+            self.test_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_dataloader_workers,
+            collate_fn=WindowedEmgDataset.collate,
+            pin_memory=True,
+            shuffle=False,
+        )
 
 
 class TDSConvCTCModule(pl.LightningModule):
@@ -155,11 +166,11 @@ class TDSConvCTCModule(pl.LightningModule):
 
             self.cer.update(pred_labels, target_labels)
 
-        self.log(f'{phase}_loss', loss)
+        self.log(f"{phase}_loss", loss)
         return loss
 
     def _epoch_end(self, phase: str, outputs: Sequence[Any]) -> None:
-        self.log(f'{phase}_CER', self.cer.compute())
+        self.log(f"{phase}_CER", self.cer.compute())
         self.cer.reset()
 
     def training_step(self, *args, **kwargs) -> torch.Tensor:
@@ -184,7 +195,8 @@ class TDSConvCTCModule(pl.LightningModule):
         return utils.instantiate_optimizer_and_scheduler(
             self.parameters(),
             optimizer_config=self.hparams.optimizer,
-            lr_scheduler_config=self.hparams.lr_scheduler)
+            lr_scheduler_config=self.hparams.lr_scheduler,
+        )
 
     def _ctc_greedy_decode(self, emission: torch.Tensor) -> List[int]:
         # emission: (T, num_classes)
@@ -203,15 +215,14 @@ class TDSConvCTCModule(pl.LightningModule):
 
 @hydra.main(config_path="../config", config_name="base")
 def main(config: DictConfig):
-    print(f'#### Config ####:')
-    print(OmegaConf.to_yaml(config))
+    log.info(f"\nConfig:\n{OmegaConf.to_yaml(config)}")
 
     # Add working dir to PYTHONPATH
     working_dir = get_original_cwd()
-    python_paths = os.environ.get('PYTHONPATH', '').split(os.pathsep)
+    python_paths = os.environ.get("PYTHONPATH", "").split(os.pathsep)
     if working_dir not in python_paths:
         python_paths.append(working_dir)
-        os.environ['PYTHONPATH'] = os.pathsep.join(python_paths)
+        os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
     # Seed for determinism. This seeds torch, numpy and python random modules
     # taking global rank into account (for multi-process distributed setting).
@@ -231,26 +242,39 @@ def main(config: DictConfig):
 
     # Instantiate modules
     module = instantiate(config.module, _recursive_=False)
-    data_module = instantiate(config.data_module,
-                              train_sessions=train_sessions,
-                              val_sessions=val_sessions,
-                              test_sessions=test_sessions)
+    datamodule = instantiate(
+        config.datamodule,
+        train_sessions=train_sessions,
+        val_sessions=val_sessions,
+        test_sessions=test_sessions,
+    )
 
     # Instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
         return transforms.Compose([instantiate(cfg) for cfg in configs])
 
-    data_module.train_transforms = _build_transform(config.transforms.train)
-    data_module.val_transforms = _build_transform(config.transforms.val)
-    data_module.test_transforms = _build_transform(config.transforms.test)
+    datamodule.train_transforms = _build_transform(config.transforms.train)
+    datamodule.val_transforms = _build_transform(config.transforms.val)
+    datamodule.test_transforms = _build_transform(config.transforms.test)
 
     # Instantiate callbacks
-    callback_configs = config.get('callbacks', [])
+    callback_configs = config.get("callbacks", [])
     callbacks = [instantiate(cfg) for cfg in callback_configs]
 
     # Train
     trainer = pl.Trainer(**config.trainer, callbacks=callbacks)
-    trainer.fit(module, data_module)
+    trainer.fit(module, datamodule)
+
+    # Val and test on best model
+    val_metrics = trainer.validate()
+    test_metrics = trainer.test()
+
+    results = {
+        'best_model_path': trainer.checkpoint_callback.best_model_path,
+        'val_metrics': val_metrics,
+        'test_metrics': test_metrics,
+    }
+    log.info(f"\nResults:\n{pprint.pformat(results)}")
 
 
 if __name__ == "__main__":
