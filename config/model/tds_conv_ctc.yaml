@@ -17,7 +17,7 @@ module:
   optimizer: ${optimizer}
   lr_scheduler: ${lr_scheduler}
 
-data_module:
+datamodule:
   _target_: emg2qwerty.train.WindowedEmgDataModule
   batch_size: 8
   num_dataloader_workers: 0

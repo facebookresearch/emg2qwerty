@@ -7,3 +7,4 @@ hydra:
     nodes: ${trainer.num_nodes}
     gpus_per_node: ${trainer.gpus}
     tasks_per_node: 1
+    submitit_folder: ${hydra.sweep.dir}/submitit_logs/%j
