@@ -28,22 +28,23 @@ log = logging.getLogger(__name__)
 class WindowedEmgDataModule(pl.LightningDataModule):
     def __init__(
         self,
+        batch_size: int,
+        num_workers: int,
         train_sessions: Sequence[Path],
         val_sessions: Sequence[Path],
         test_sessions: Sequence[Path],
-        batch_size: int,
-        num_dataloader_workers: int,
         train_window_length: int,
         train_window_padding: Tuple[int, int],
     ) -> None:
         super().__init__()
 
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
         self.train_sessions = train_sessions
         self.val_sessions = val_sessions
         self.test_sessions = test_sessions
 
-        self.batch_size = batch_size
-        self.num_dataloader_workers = num_dataloader_workers
         self.train_window_length = train_window_length
         self.train_window_padding = train_window_padding
 
@@ -69,7 +70,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            num_workers=self.num_dataloader_workers,
+            num_workers=self.num_workers,
             collate_fn=WindowedEmgDataset.collate,
             pin_memory=True,
             shuffle=True,
@@ -82,7 +83,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         return DataLoader(
             self.val_dataset,
             batch_size=1,
-            num_workers=self.num_dataloader_workers,
+            num_workers=self.num_workers,
             collate_fn=WindowedEmgDataset.collate,
             pin_memory=True,
             shuffle=False,
@@ -95,7 +96,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         return DataLoader(
             self.test_dataset,
             batch_size=1,
-            num_workers=self.num_dataloader_workers,
+            num_workers=self.num_workers,
             collate_fn=WindowedEmgDataset.collate,
             pin_memory=True,
             shuffle=False,
@@ -250,6 +251,8 @@ def main(config: DictConfig):
     module = instantiate(config.module, _recursive_=False)
     datamodule = instantiate(
         config.datamodule,
+        batch_size=config.batch_size,
+        num_workers=config.num_workers,
         train_sessions=train_sessions,
         val_sessions=val_sessions,
         test_sessions=test_sessions,

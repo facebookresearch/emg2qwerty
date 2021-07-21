@@ -4,12 +4,15 @@ defaults:
   - user: generic
 
 seed: 1501
+batch_size: 64
+num_workers: 10
 
 trainer:
+  # TODO: ddp with hydra launcher multirun leads to some deadlock
+  accelerator: ddp_spawn
   num_nodes: 1
   gpus: 2
-  accelerator: ddp_spawn
-  max_epochs: 10
+  max_epochs: 3
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
