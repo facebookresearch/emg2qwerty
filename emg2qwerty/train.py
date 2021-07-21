@@ -76,9 +76,12 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
+        # Val/test dataloaders feed entire sessions at once without windowing,
+        # and therefore the batch size is set to 1 to fit within GPU memory.
+        # This also avoids any influence of padding in val/test scores.
         return DataLoader(
             self.val_dataset,
-            batch_size=self.batch_size,
+            batch_size=1,
             num_workers=self.num_dataloader_workers,
             collate_fn=WindowedEmgDataset.collate,
             pin_memory=True,
@@ -86,9 +89,12 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
+        # Val/test dataloaders feed entire sessions at once without windowing,
+        # and therefore the batch size is set to 1 to fit within GPU memory.
+        # This also avoids any influence of padding in val/test scores.
         return DataLoader(
             self.test_dataset,
-            batch_size=self.batch_size,
+            batch_size=1,
             num_workers=self.num_dataloader_workers,
             collate_fn=WindowedEmgDataset.collate,
             pin_memory=True,
