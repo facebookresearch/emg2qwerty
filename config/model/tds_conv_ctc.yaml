@@ -19,7 +19,5 @@ module:
 
 datamodule:
   _target_: emg2qwerty.train.WindowedEmgDataModule
-  batch_size: 8
-  num_dataloader_workers: 0
   train_window_length: 10000
   train_window_padding: [1750, 250]
