@@ -1,23 +1,25 @@
 defaults:
-  - transforms: log_mel
-  - model: tds_conv_ctc
   - user: generic
+  - transforms: log_spectrogram
+  - model: tds_conv_ctc
+  - optimizer: adam
+  - lr_scheduler: linear_warmup_cosine_annealing
 
 seed: 1501
-batch_size: 64
-num_workers: 10
+batch_size: 32
+num_workers: 4
+metric: val_CER
+checkpoint: null
 
 trainer:
-  # TODO: ddp with hydra launcher multirun leads to some deadlock
-  accelerator: ddp_spawn
+  max_epochs: 150
   num_nodes: 1
-  gpus: 2
-  max_epochs: 3
+  gpus: 1
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-    monitor: val_CER
+    monitor: ${metric}
     mode: min
     save_last: True
     verbose: True

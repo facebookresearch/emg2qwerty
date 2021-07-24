@@ -1,0 +1,30 @@
+# @package _global_
+logspec:
+  _target_: emg2qwerty.transforms.LogSpectrogram
+  n_fft: 64
+  hop_length: 16  # Downsamples from 2000Hz to 125Hz
+
+specaug:
+  _target_: emg2qwerty.transforms.SpecAugment
+  n_time_masks: 3
+  time_mask_param: 25  # Max 200ms per time mask for 125Hz spectrogram
+  n_freq_masks: 2
+  freq_mask_param: 4
+
+transforms:
+  train:
+    - _target_: emg2qwerty.transforms.ToTensor
+      fields: [emg_left, emg_right]
+    - _target_: emg2qwerty.transforms.RandomBandRotation
+      offsets: [-1, 0, 1]
+    - _target_: emg2qwerty.transforms.TemporalAlignmentJitter
+      max_offset: 3
+    - ${logspec}
+    - ${specaug}
+
+  val:
+    - _target_: emg2qwerty.transforms.ToTensor
+      fields: [emg_left, emg_right]
+    - ${logspec}
+
+  test: ${transforms.val}

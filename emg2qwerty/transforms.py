@@ -15,8 +15,8 @@ class ToTensor:
     """Extracts the specified ``fields`` from a numpy structured array
     and stacks them into a ``torch.Tensor``.
 
-    By default, the returned tensor is of shape (time, field/batch, channel)
-    following TNC convention.
+    Following TNC convention as a default, the returned tensor is of shape
+    (time, field/batch, electrode_channel).
 
     Args:
         fields (list): List of field names to be extracted from the passed in
@@ -87,7 +87,7 @@ class Compose:
 
 @dataclass
 class RandomBandRotation:
-    """Applies band rotation augmentation by shifting the channels/electrodes
+    """Applies band rotation augmentation by shifting the electrode channels
     by an offset value randomly chosen from ``offsets``. By default, assumes
     the input is of shape (..., C).
 
@@ -99,7 +99,7 @@ class RandomBandRotation:
         offsets (list): List of integers denoting the offsets by which the
             electrodes are allowed to be shift. A random offset from this
             list is chosen for each application of the transform.
-        channel_dim (int): The channel/electrode dimension. (default: -1)
+        channel_dim (int): The electrode channel dimension. (default: -1)
     """
 
     offsets: Sequence[int] = (-1, 0, 1)
@@ -145,29 +145,24 @@ class TemporalAlignmentJitter:
 
 
 @dataclass
-class LogMelSpectrogram:
+class LogSpectrogram:
     """TODO: docstring"""
 
-    n_fft: int = 512
-    window_length: int = 160
-    stride: int = 40
-    n_mels: int = 32
-    sample_rate: int = 2000
+    n_fft: int = 64
+    hop_length: int = 16
 
     def __post_init__(self) -> None:
-        # TODO: normalized, pad, pad_mode, center
-        self.melspec = torchaudio.transforms.MelSpectrogram(
-            sample_rate=self.sample_rate,
+        self.spectrogram = torchaudio.transforms.Spectrogram(
             n_fft=self.n_fft,
-            win_length=self.window_length,
-            hop_length=self.stride,
-            n_mels=self.n_mels,
-            normalized=True)
+            hop_length=self.hop_length,
+            normalized=True,
+            center=False)
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         x = tensor.transpose(0, -1)  # (T, ..., C) -> (C, ..., T)
-        logmel = self.melspec(x).log()  # (C, ..., n_mels, T)
-        return logmel.transpose(0, -1)  # (T, ..., n_mels, C)
+        spec = self.spectrogram(x)  # (C, ..., freq, T)
+        logspec = torch.log10(spec + 1e-6)
+        return logspec.transpose(0, -1)  # (T, ..., freq, C)
 
 
 @dataclass

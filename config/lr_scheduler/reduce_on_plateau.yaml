@@ -1,0 +1,8 @@
+# @package _global_
+lr_scheduler:
+  scheduler:
+    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+    mode: min
+    min_lr: 1e-5
+  interval: epoch
+  monitor: ${metric}
