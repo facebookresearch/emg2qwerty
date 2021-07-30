@@ -75,9 +75,10 @@ class RotationInvariantMLP(nn.Module):
         return x.max(dim=2).values if self.pooling == "max" else x.mean(dim=2)
 
 
-class LeftRightRotationInvariantMLP(nn.Module):
+class MultiBandRotationInvariantMLP(nn.Module):
     """TODO docstring: (T, N, band, ...)"""
     def __init__(self,
+                 num_bands: int,
                  in_features: int,
                  mlp_features: Sequence[int],
                  pooling: str = "mean",
@@ -85,26 +86,26 @@ class LeftRightRotationInvariantMLP(nn.Module):
                  stack_dim: int = 2) -> None:
         super().__init__()
 
-        # Separate MLPs for left and right bands
-        self.left_mlp = RotationInvariantMLP(in_features,
-                                             mlp_features,
-                                             pooling=pooling,
-                                             offsets=offsets)
-        self.right_mlp = RotationInvariantMLP(in_features,
-                                              mlp_features,
-                                              pooling=pooling,
-                                              offsets=offsets)
-
+        self.num_bands = num_bands
         self.stack_dim = stack_dim
 
+        # Separate MLP for each band
+        self.mlps = nn.ModuleList()
+        for i in range(num_bands):
+            self.mlps.append(
+                RotationInvariantMLP(in_features,
+                                     mlp_features,
+                                     pooling=pooling,
+                                     offsets=offsets))
+
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        assert inputs.shape[self.stack_dim] == 2
-        left, right = inputs.unbind(self.stack_dim)
+        assert inputs.shape[self.stack_dim] == self.num_bands
 
-        left = self.left_mlp(left)
-        right = self.right_mlp(right)
-
-        return torch.stack([left, right], dim=self.stack_dim)
+        inputs_per_band = inputs.unbind(self.stack_dim)
+        outputs_per_band = [
+            mlp(input) for mlp, input in zip(self.mlps, inputs_per_band)
+        ]
+        return torch.stack(outputs_per_band, dim=self.stack_dim)
 
 
 class TDSConv2dBlock(nn.Module):

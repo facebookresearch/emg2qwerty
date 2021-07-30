@@ -19,7 +19,7 @@ from emg2qwerty import transforms, utils
 from emg2qwerty.charset import charset
 from emg2qwerty.data import WindowedEmgDataset
 from emg2qwerty.metrics import CharacterErrorRate
-from emg2qwerty.modules import (LeftRightRotationInvariantMLP, SpectrogramNorm,
+from emg2qwerty.modules import (MultiBandRotationInvariantMLP, SpectrogramNorm,
                                 TDSConvEncoder)
 from emg2qwerty.transforms import Transform
 
@@ -109,7 +109,7 @@ class TDSConvCTCModule(pl.LightningModule):
     def __init__(
         self,
         in_features: int,
-        out_features: int,
+        mlp_features: int,
         block_channels: Sequence[int],
         kernel_width: int,
         optimizer: DictConfig,
@@ -122,16 +122,22 @@ class TDSConvCTCModule(pl.LightningModule):
         self.num_classes = charset().num_classes + 1
         self.blank_label = charset().null_class
 
+        # Constants for readability
+        num_bands = 2
+        in_channels = 16  # Electrode channels
+        num_features = mlp_features[-1] * num_bands
+
         # Model
-        self.spec_norm = SpectrogramNorm(channels=32)  # 2 bands x 16 channels
-        self.rotation_invariant_mlp = LeftRightRotationInvariantMLP(
+        self.spec_norm = SpectrogramNorm(channels=in_channels * num_bands)
+        self.rotation_invariant_mlp = MultiBandRotationInvariantMLP(
+            num_bands=num_bands,
             in_features=in_features,
-            mlp_features=[out_features // 2],
+            mlp_features=mlp_features,
             pooling="mean")
-        self.conv_encoder = TDSConvEncoder(num_features=out_features,
+        self.conv_encoder = TDSConvEncoder(num_features=num_features,
                                            block_channels=block_channels,
                                            kernel_width=kernel_width)
-        self.linear = nn.Linear(out_features, self.num_classes)
+        self.linear = nn.Linear(num_features, self.num_classes)
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
         # Criterion
@@ -143,9 +149,9 @@ class TDSConvCTCModule(pl.LightningModule):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs  # (T, N, bands=2, freq, electrode_channels=16)
         x = self.spec_norm(x)  # (T, N, bands=2, freq, C=16)
-        x = self.rotation_invariant_mlp(x)  # (T, N, bands=2, out_features/2)
-        x = x.flatten(start_dim=2)  # (T, N, out_features)
-        x = self.conv_encoder(x)  # (T, N, out_features)
+        x = self.rotation_invariant_mlp(x)  # (T, N, bands=2, mlp_features[-1])
+        x = x.flatten(start_dim=2)  # (T, N, num_features)
+        x = self.conv_encoder(x)  # (T, N, num_features)
         x = self.linear(x)  # (T, N, num_classes)
         return self.log_softmax(x)  # (T, N, num_classes)
 
