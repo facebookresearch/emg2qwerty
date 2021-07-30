@@ -1,0 +1,8 @@
+# @package _global_
+lr_scheduler:
+  scheduler:
+    _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+    warmup_epochs: 10
+    max_epochs: ${trainer.max_epochs}
+    eta_min: 1e-5
+  interval: epoch

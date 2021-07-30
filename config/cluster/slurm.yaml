@@ -4,11 +4,7 @@ defaults:
 
 trainer:
   num_nodes: 1
-  gpus: 8
-
-# Due to ddp_spawn, larger num_workers together with larger trainer.gpus
-# leads to massive slowdown
-num_workers: 2
+  gpus: 4
 
 hydra:
   run:
@@ -20,5 +16,6 @@ hydra:
     nodes: ${trainer.num_nodes}
     gpus_per_node: ${trainer.gpus}
     tasks_per_node: 1
-    cpus_per_task: 48
+    timeout_min: 2880
+    cpus_per_task: 20
     partition: learnfair

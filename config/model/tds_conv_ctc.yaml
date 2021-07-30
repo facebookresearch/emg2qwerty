@@ -1,23 +1,12 @@
 # @package _global_
-optimizer:
-  _target_: torch.optim.Adam
-  lr: 0.001
-
-lr_scheduler:
-  _target_: torch.optim.lr_scheduler.StepLR
-  step_size: 100
-  gamma: 0.1
-
 module:
   _target_: emg2qwerty.train.TDSConvCTCModule
-  in_features: 512  # n_mels=32 * channels=16
+  in_features: 528  # freq * channels = (n_fft // 2 + 1) * 16
   out_features: 768
   block_channels: [24, 24, 24, 24]
-  kernel_width: 11
-  optimizer: ${optimizer}
-  lr_scheduler: ${lr_scheduler}
+  kernel_width: 32  # Temporal receptive field of 125 samples
 
 datamodule:
   _target_: emg2qwerty.train.WindowedEmgDataModule
-  train_window_length: 10000
-  train_window_padding: [1750, 250]
+  window_length: 8000  # 4 sec windows at 2000Hz
+  padding: [1800, 200]  # 900ms past context, 100ms future context
