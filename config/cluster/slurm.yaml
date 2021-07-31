@@ -7,10 +7,6 @@ trainer:
   gpus: 4
 
 hydra:
-  run:
-    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  sweep:
-    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
   launcher:
     submitit_folder: ${hydra.sweep.dir}/submitit_logs/%j
     nodes: ${trainer.num_nodes}
@@ -19,3 +15,7 @@ hydra:
     timeout_min: 2880
     cpus_per_task: 20
     partition: learnfair
+  run:
+    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
