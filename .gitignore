@@ -39,3 +39,6 @@ dmypy.json
 # Logs and checkpoints
 logs/
 lightning_logs/
+
+# Symlinks
+data
