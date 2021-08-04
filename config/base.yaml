@@ -8,8 +8,9 @@ defaults:
 seed: 1501
 batch_size: 32
 num_workers: 4
-metric: val_CER
 checkpoint: null
+monitor_metric: val_CER
+monitor_mode: min
 
 trainer:
   max_epochs: 150
@@ -19,9 +20,15 @@ trainer:
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-    monitor: ${metric}
-    mode: min
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
     save_last: True
+    verbose: True
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
+    patience: 20
+    check_on_train_epoch_end: False
     verbose: True
 
 dataset:

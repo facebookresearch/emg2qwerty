@@ -156,6 +156,9 @@ class LogSpectrogram:
             n_fft=self.n_fft,
             hop_length=self.hop_length,
             normalized=True,
+            # Disable centering of FFT windows to avoid padding inconsistencies
+            # between train and test (due to differing window lengths), as well
+            # as to be more faithful to real-time/streaming execution.
             center=False)
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
