@@ -27,4 +27,4 @@ class CharacterErrorRate(Metric):
         self.total += len(target_str)
 
     def compute(self):
-        return self.errors.float() / self.total
+        return self.errors.float() / self.total * 100.
