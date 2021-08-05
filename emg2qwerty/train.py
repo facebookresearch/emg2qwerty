@@ -299,18 +299,19 @@ def main(config: DictConfig):
 
     # Train
     trainer = pl.Trainer(**config.trainer, callbacks=callbacks)
-    trainer.fit(module, datamodule)
+    if config.train:
+        trainer.fit(module, datamodule)
 
     # Val and test on best model
-    val_metrics = trainer.validate()
-    test_metrics = trainer.test()
+    val_metrics = trainer.validate(module, datamodule)
+    test_metrics = trainer.test(module, datamodule)
 
     results = {
-        'best_model_path': trainer.checkpoint_callback.best_model_path,
         'val_metrics': val_metrics,
         'test_metrics': test_metrics,
+        'best_model_path': trainer.checkpoint_callback.best_model_path,
     }
-    log.info(f"\nResults:\n{pprint.pformat(results)}")
+    pprint.pprint(results, sort_dicts=False)
 
 
 if __name__ == "__main__":
