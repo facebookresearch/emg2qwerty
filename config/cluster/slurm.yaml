@@ -16,6 +16,6 @@ hydra:
     cpus_per_task: 20
     partition: learnfair
   run:
-    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: /checkpoint/${oc.env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
-    dir: /checkpoint/${env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: /checkpoint/${oc.env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}

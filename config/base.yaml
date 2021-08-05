@@ -48,3 +48,4 @@ hydra:
       override_dirname:
         exclude_keys:
           - cluster
+          - checkpoint
