@@ -44,4 +44,4 @@ lightning_logs/
 data
 
 # LM
-wikitext-*
+wikitext-103-raw*
