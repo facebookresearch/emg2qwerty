@@ -2,7 +2,9 @@
 lr_scheduler:
   scheduler:
     _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
-    min_lr: 1e-6
     mode: ${monitor_mode}
+    factor: 0.1
+    patience: 10
+    min_lr: 1e-6
   monitor: ${monitor_metric}
   interval: epoch
