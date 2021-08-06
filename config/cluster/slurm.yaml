@@ -2,21 +2,15 @@
 defaults:
   - override /hydra/launcher: submitit_slurm
 
-trainer:
-  num_nodes: 1
-  gpus: 8
-
 hydra:
+  run:
+    dir: /checkpoint/${oc.env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
   launcher:
-    submitit_folder: ${hydra.sweep.dir}/submitit_logs/%j
+    submitit_folder: ${hydra.run.dir}/submitit_logs/%j
+    timeout_min: 2880
     nodes: ${trainer.num_nodes}
     gpus_per_node: ${trainer.gpus}
     tasks_per_node: 1
-    cpus_per_task: 40
+    cpus_per_task: ${cpus_per_task:${.gpus_per_node},${.tasks_per_node},${num_workers}}
     mem_gb: 300
-    timeout_min: 2880
     partition: learnfair
-  run:
-    dir: /checkpoint/${oc.env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  sweep:
-    dir: /checkpoint/${oc.env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}

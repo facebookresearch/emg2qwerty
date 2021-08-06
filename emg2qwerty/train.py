@@ -315,4 +315,5 @@ def main(config: DictConfig):
 
 
 if __name__ == "__main__":
+    OmegaConf.register_new_resolver("cpus_per_task", utils.cpus_per_task)
     main()
