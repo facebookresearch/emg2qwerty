@@ -4,7 +4,7 @@ defaults:
 
 trainer:
   num_nodes: 1
-  gpus: 4
+  gpus: 8
 
 hydra:
   launcher:
@@ -12,8 +12,9 @@ hydra:
     nodes: ${trainer.num_nodes}
     gpus_per_node: ${trainer.gpus}
     tasks_per_node: 1
+    cpus_per_task: 40
+    mem_gb: 300
     timeout_min: 2880
-    cpus_per_task: 20
     partition: learnfair
   run:
     dir: /checkpoint/${oc.env:USER}/emg2qwerty/${now:%Y-%m-%d}/${now:%H-%M-%S}

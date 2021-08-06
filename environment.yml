@@ -16,6 +16,7 @@ dependencies:
   - unidecode
   - pandas
   - pyyaml
+  - nltk
   - pytest
   - click
   - mypy
@@ -28,3 +29,4 @@ dependencies:
     - hydra-submitit-launcher
     - omegaconf>=2.1.0
     - lightning-bolts
+    - https://github.com/kpu/kenlm/archive/master.zip
