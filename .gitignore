@@ -36,6 +36,9 @@ dmypy.json
 # PyCharm
 .idea
 
+# Hypothesis
+.hypothesis
+
 # Logs and checkpoints
 logs/
 lightning_logs/

@@ -4,6 +4,7 @@ defaults:
   - model: tds_conv_ctc
   - optimizer: adam
   - lr_scheduler: linear_warmup_cosine_annealing
+  - decoder: ctc_greedy
 
 seed: 1501
 batch_size: 32
