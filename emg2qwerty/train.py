@@ -1,10 +1,9 @@
 import logging
 import os
 import pprint
-import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence, List, Tuple
+from typing import Any, Mapping, Optional, Sequence, List, Tuple, Union
 
 import hydra
 import numpy as np
@@ -18,6 +17,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from emg2qwerty import transforms, utils
 from emg2qwerty.charset import charset
 from emg2qwerty.data import WindowedEmgDataset
+from emg2qwerty.decoder import Decoder
 from emg2qwerty.metrics import CharacterErrorRate
 from emg2qwerty.modules import (MultiBandRotationInvariantMLP, SpectrogramNorm,
                                 TDSConvEncoder)
@@ -114,13 +114,9 @@ class TDSConvCTCModule(pl.LightningModule):
         kernel_width: int,
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
+        decoder: Decoder,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters()
-
-        # classes = character set + CTC blank token
-        self.num_classes = charset().num_classes + 1
-        self.blank_label = charset().null_class
 
         # Constants for readability
         num_bands = 2
@@ -137,14 +133,18 @@ class TDSConvCTCModule(pl.LightningModule):
         self.conv_encoder = TDSConvEncoder(num_features=num_features,
                                            block_channels=block_channels,
                                            kernel_width=kernel_width)
-        self.linear = nn.Linear(num_features, self.num_classes)
+        self.linear = nn.Linear(num_features, charset().num_classes)
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
         # Criterion
-        self.ctc_loss = nn.CTCLoss(blank=self.blank_label)
+        self.ctc_loss = nn.CTCLoss(blank=charset().null_class)
 
         # Metric
         self.cer = CharacterErrorRate()
+
+        self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
+        self.decoder = decoder
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs  # (T, N, bands=2, freq, electrode_channels=16)
@@ -179,11 +179,16 @@ class TDSConvCTCModule(pl.LightningModule):
         )
 
         # Decode emissions and update CER metric
+        emissions = emissions.detach().cpu().numpy()
+        emission_lengths = emission_lengths.detach().cpu().numpy()
         for i in range(N):
             # Unpad emission matrix for batch entry and perform CTC decoding.
             # emissions: (T, N, num_classes)
-            emission = emissions[:emission_lengths[i], i]
-            pred_labels = self._ctc_greedy_decode(emission)
+            self.decoder.reset()
+            pred_labels, _ = self.decoder.decode(
+                emissions=emissions[:emission_lengths[i], i],
+                timestamps=np.arange(emission_lengths[i]),
+            )
 
             # Unpad target labels for batch entry. targets: (T, N)
             target_labels = targets[:target_lengths[i], i]
@@ -218,23 +223,9 @@ class TDSConvCTCModule(pl.LightningModule):
     def configure_optimizers(self):
         return utils.instantiate_optimizer_and_scheduler(
             self.parameters(),
-            optimizer_config=self.hparams.optimizer,
-            lr_scheduler_config=self.hparams.lr_scheduler,
+            optimizer_config=self.optimizer,
+            lr_scheduler_config=self.lr_scheduler,
         )
-
-    def _ctc_greedy_decode(self, emission: torch.Tensor) -> List[int]:
-        # emission: (T, num_classes)
-        assert emission.ndim == 2
-        assert emission.shape[1] == self.num_classes
-
-        decoding = []
-        prev_label = self.blank_label
-        for label in emission.argmax(-1).detach().cpu().numpy():
-            if label != self.blank_label and label != prev_label:
-                decoding.append(label)
-            prev_label = label
-
-        return decoding
 
 
 @hydra.main(config_path="../config", config_name="base")
@@ -266,15 +257,18 @@ def main(config: DictConfig):
 
     # Instantiate LightningModule
     log.info(f'Instantiating LightningModule {config.module}')
+    decoder = instantiate(config.decoder)
     module = instantiate(config.module,
                          optimizer=config.optimizer,
                          lr_scheduler=config.lr_scheduler,
+                         decoder=decoder,
                          _recursive_=False)
     if config.checkpoint is not None:
         log.info(f'Loading from checkpoint {config.checkpoint}')
         module = module.load_from_checkpoint(config.checkpoint,
                                              optimizer=config.optimizer,
-                                             lr_scheduler=config.lr_scheduler)
+                                             lr_scheduler=config.lr_scheduler,
+                                             decoder=decoder)
 
     # Instantiate LightningDataModule
     log.info(f'Instantiating LightningDataModule {config.datamodule}')

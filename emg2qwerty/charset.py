@@ -122,14 +122,14 @@ class CharacterSet:
         return tuple(self._key_to_unicode.values())
 
     @property
-    def num_classes(self) -> int:
-        """Number of non-null classes."""
-        return len(self._key_to_unicode)
+    def null_class(self) -> int:
+        """Categorical label of the null-class (blank label)."""
+        return len(self)
 
     @property
-    def null_class(self) -> int:
-        """Categorical label of the null class (such as in CTC)."""
-        return len(self._key_to_unicode)
+    def num_classes(self) -> int:
+        """Number of training classes including null-class (blank label)."""
+        return len(self) + 1
 
     def key_to_unicode(self, key: KeyChar) -> int:
         """Fetch the unicode value corresponding to the given key."""
@@ -224,7 +224,7 @@ class CharacterSet:
                 # len(key) == 1 clause is to exclude unsupported modifier keys
                 # in pynput.Key format such as 'Key.tab'.
                 key = self._normalize_str(key)
-                key = CharacterSet.UNICHAR_TO_KEY.get(key, key)
+                key = self.UNICHAR_TO_KEY.get(key, key)
 
             return key
 
@@ -240,11 +240,11 @@ class CharacterSet:
         normalized_str = unicode_str
 
         # Apply known substitutions
-        for k, v in CharacterSet.CHAR_SUBSTITUTIONS.items():
+        for k, v in self.CHAR_SUBSTITUTIONS.items():
             normalized_str = normalized_str.replace(k, v)
 
         def _spurious_char(c: UniChar) -> bool:
-            return c not in self and c not in CharacterSet.UNICHAR_TO_KEY
+            return c not in self and c not in self.UNICHAR_TO_KEY
 
         # Handle any remaining spurious unicode chars
         unidecode_map = {}

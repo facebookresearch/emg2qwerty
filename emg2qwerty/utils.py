@@ -22,4 +22,7 @@ def cpus_per_task(gpus_per_node: int, tasks_per_node: int,
     """Number of CPUs to request per task per node taking into account
     the number of gpus and dataloading workers."""
     gpus_per_task = gpus_per_node // tasks_per_node
-    return (num_workers + 1) * gpus_per_task
+    if gpus_per_task <= 0:
+        return num_workers + 1
+    else:
+        return (num_workers + 1) * gpus_per_task

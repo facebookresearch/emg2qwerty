@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import (Any, ClassVar, Dict, KeysView, List, Mapping, Optional,
                     Sequence, Tuple, Union)
@@ -197,7 +197,7 @@ class LabelData:
     label_str: str
     timestamps: Optional[Sequence[float]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamps is not None:
             self.timestamps = np.array(self.timestamps)
 
@@ -372,7 +372,7 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     jitter: bool = True
     transform: Transform[np.ndarray, torch.Tensor] = transforms.ToTensor()
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         with Emg2QwertySessionData(self.hdf5_path) as session:
             assert session.condition == "on_keyboard", (
                 f"Unsupported condition {self.session.condition}")
