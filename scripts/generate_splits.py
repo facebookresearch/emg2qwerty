@@ -12,7 +12,6 @@
 #    combined test data from each of the N `user{n}.yaml` configs.
 
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -20,6 +19,7 @@ import click
 import numpy as np
 import pandas as pd
 import yaml
+
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -34,19 +34,18 @@ def filter_users(df: pd.DataFrame, min_sessions: int) -> pd.Series:
     return users
 
 
-def sample_users(df: pd.DataFrame,
-                 n: int,
-                 min_sessions: int,
-                 seed: Optional[int] = None) -> pd.Series:
+def sample_users(
+    df: pd.DataFrame, n: int, min_sessions: int, seed: Optional[int] = None
+) -> pd.Series:
     """Sample `n` users from the given dataset who have at least
     `min_sessions` sessions."""
     users = filter_users(df, min_sessions=min_sessions)
     return users.sample(n, random_state=seed)
 
 
-def sample_test_users(df: pd.DataFrame,
-                      n: int,
-                      seed: Optional[int] = None) -> pd.Series:
+def sample_test_users(
+    df: pd.DataFrame, n: int, seed: Optional[int] = None
+) -> pd.Series:
     """Sample `n` users for personalization by giving precedence to those
     with the most number of sessions."""
     users_with_qc_tags = set(df[df.quality_check_tags.map(len) > 0].user)
@@ -71,25 +70,29 @@ def sample_test_users(df: pd.DataFrame,
     return test_users
 
 
-def stratified_sample(df: pd.DataFrame,
-                      n: int,
-                      seed: Optional[int] = None) -> pd.DataFrame:
+def stratified_sample(
+    df: pd.DataFrame, n: int, seed: Optional[int] = None
+) -> pd.DataFrame:
     """Sample `n` rows per user from `df`."""
     random_state = np.random.RandomState(seed)
     return df.groupby("user", group_keys=False).apply(
-        lambda x: x.sample(n, random_state=random_state))
+        lambda x: x.sample(n, random_state=random_state)
+    )
 
 
-def split_dataset(df: pd.DataFrame,
-                  min_train_sessions_per_user: int,
-                  n_val_sessions_per_user: int,
-                  n_test_sessions_per_user: int,
-                  seed: Optional[int] = None):
+def split_dataset(
+    df: pd.DataFrame,
+    min_train_sessions_per_user: int,
+    n_val_sessions_per_user: int,
+    n_test_sessions_per_user: int,
+    seed: Optional[int] = None,
+):
     """Split `df` into train, val and test partitions satisfying the
     provided per-user constraints."""
     # Filter out users with too few sessions to satisfy constraints
-    min_sessions = (min_train_sessions_per_user + n_val_sessions_per_user +
-                    n_test_sessions_per_user)
+    min_sessions = (
+        min_train_sessions_per_user + n_val_sessions_per_user + n_test_sessions_per_user
+    )
     users = filter_users(df, min_sessions=min_sessions)
 
     # Sample test sessions
@@ -106,10 +109,13 @@ def split_dataset(df: pd.DataFrame,
     return train, val, test
 
 
-def dump_split(train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame,
-               path: Path) -> None:
-    log.info(f"Config: {path}, train: {len(train)} sessions, "
-             f"val: {len(val)} sessions, test: {len(test)} sessions")
+def dump_split(
+    train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame, path: Path
+) -> None:
+    log.info(
+        f"Config: {path}, train: {len(train)} sessions, "
+        f"val: {len(val)} sessions, test: {len(test)} sessions"
+    )
 
     def _format_split(split: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
         fields = ["user", "session"]
@@ -185,7 +191,8 @@ def main(
         min_train_sessions_per_user=min_train_sessions_per_user,
         n_val_sessions_per_user=n_val_sessions_per_user,
         n_test_sessions_per_user=n_test_sessions_per_user,
-        seed=seed)
+        seed=seed,
+    )
 
     # Train and val splits for generic model with sessions excluding those
     # from held-out users. Testing will be on sessions sampled from
@@ -195,22 +202,27 @@ def main(
         min_train_sessions_per_user=min_train_sessions_per_user,
         n_val_sessions_per_user=n_val_sessions_per_user,
         n_test_sessions_per_user=0,
-        seed=seed)
+        seed=seed,
+    )
 
-    config_dir = Path(__file__).parents[1].joinpath('config')
+    config_dir = Path(__file__).parents[1].joinpath("config")
 
     # Dump split for generic benchmark
-    dump_split(generic_train,
-               generic_val,
-               personalized_test,
-               path=config_dir.joinpath("user/generic.yaml"))
+    dump_split(
+        generic_train,
+        generic_val,
+        personalized_test,
+        path=config_dir.joinpath("user/generic.yaml"),
+    )
 
     # Dump `n_test_users` splits for per-user personalization benchmarks
     for i, user in enumerate(test_users):
-        dump_split(personalized_train[personalized_train["user"] == user],
-                   personalized_val[personalized_val["user"] == user],
-                   personalized_test[personalized_test["user"] == user],
-                   path=config_dir.joinpath(f"user/user{i}.yaml"))
+        dump_split(
+            personalized_train[personalized_train["user"] == user],
+            personalized_val[personalized_val["user"] == user],
+            personalized_test[personalized_test["user"] == user],
+            path=config_dir.joinpath(f"user/user{i}.yaml"),
+        )
 
 
 if __name__ == "__main__":

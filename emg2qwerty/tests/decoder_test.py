@@ -56,7 +56,7 @@ def test_beamstate_no_lm():
         assert state.label_node.depth == i + 1
 
         assert state.label == label
-        assert state.decoding == labels[:i + 1]
+        assert state.decoding == labels[: i + 1]
         assert state.timestamps == list(range(i + 1))
 
         hash_ = hashlib.sha256(bytes(state.decoding))
@@ -106,7 +106,7 @@ def test_beamstate_lm():
         assert state.lm_node.depth == i + 1
 
         assert state.label == label
-        assert state.decoding == labels[:i + 1]
+        assert state.decoding == labels[: i + 1]
         assert state.timestamps == list(range(i + 1))
         assert len(state.lm_states) == i + 2
         assert len(state.lm_scores) == i + 2
@@ -115,7 +115,7 @@ def test_beamstate_lm():
         assert state.hash().digest() == hash_.digest()
         assert state.hash().digest() == prev_state.hash(label).digest()
 
-    expected_lm_score = lm.score(' '.join(keys), bos=True, eos=False)
+    expected_lm_score = lm.score(" ".join(keys), bos=True, eos=False)
     assert abs(sum(state.lm_scores) - expected_lm_score) < 1e-4
 
 
@@ -125,13 +125,11 @@ def test_beamstate_multiple_paths():
 
     Two paths leading to the same decoding prefix should match in
     everything (such as LM states and scores) except the onset timestamps."""
-    classes = [(c, ord(c)) for c in ['a', 'b']]
+    classes = [(c, ord(c)) for c in ["a", "b"]]
     _charset = CharacterSet(_key_to_unicode=OrderedDict(classes))
 
     lm_file = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
-    decoder = CTCBeamDecoder(_charset=_charset,
-                             lm_file=str(lm_file),
-                             delete_key=None)
+    decoder = CTCBeamDecoder(_charset=_charset, lm_file=str(lm_file), delete_key=None)
     blank_label = _charset.null_class
     init_state = BeamState.init(blank_label, lm=decoder.lm)
 
@@ -146,9 +144,9 @@ def test_beamstate_multiple_paths():
         state = init_state
         for timestamp, label in enumerate(labels):
             if label != prev_label:
-                state = decoder.next_state(prev_state=state,
-                                           label=label,
-                                           timestamp=timestamp)
+                state = decoder.next_state(
+                    prev_state=state, label=label, timestamp=timestamp
+                )
                 prev_label = label
 
         return state
@@ -190,17 +188,15 @@ def test_timestamps():
             gets kicked out of the beam mid-way (say at t=1). The correct
             onset timestamp for 'b' should be t=2 corresponding to path 2.
     """
-    classes = [(c, ord(c)) for c in ['a', 'b']]
+    classes = [(c, ord(c)) for c in ["a", "b"]]
     _charset = CharacterSet(_key_to_unicode=OrderedDict(classes))
 
     lm_file = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
-    decoder = CTCBeamDecoder(_charset=_charset,
-                             lm_file=str(lm_file),
-                             delete_key=None)
+    decoder = CTCBeamDecoder(_charset=_charset, lm_file=str(lm_file), delete_key=None)
 
     # Two paths leading to the same decoding 'ab'
-    path1 = 'abb'
-    path2 = 'aab'
+    path1 = "abb"
+    path2 = "aab"
 
     def _decode(paths, beam_size):
         T = max(len(path) for path in paths)
@@ -213,8 +209,9 @@ def test_timestamps():
 
         decoder.beam_size = beam_size
         decoder.reset()
-        decoding, timestamps = decoder.decode(emissions=emissions,
-                                              timestamps=np.arange(T))
+        decoding, timestamps = decoder.decode(
+            emissions=emissions, timestamps=np.arange(T)
+        )
 
         decoding = _charset.labels_to_str(decoding)
         return decoding, timestamps
@@ -222,13 +219,13 @@ def test_timestamps():
     # Scenario 1: path1 has higher prob and path2 gets kicked out.
     # Token 'b' should have onset timestamp corresponding to path1.
     decoding, timestamps = _decode([path1], beam_size=1)
-    assert decoding == 'ab'
+    assert decoding == "ab"
     assert timestamps == [0, 1]
 
     # Scenario 2: path2 has higher prob and path1 gets kicked out.
     # Token 'b' should have onset timestamp corresponding to path2.
     decoding, timestamps = _decode([path2], beam_size=1)
-    assert decoding == 'ab'
+    assert decoding == "ab"
     assert timestamps == [0, 2]
 
 
@@ -250,14 +247,14 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
     # Expected LM score:
     # lm_weight * sum(lm score for each word) + insertion_bonus * len(sentence)
     words_score = 0.0
-    words = sent.split(' ')
+    words = sent.split(" ")
     for i, word in enumerate(words):
         if word:
             eos = i != (len(words) - 1)  # Last word doesn't end
-            words_score += lm.score(' '.join(word), bos=True, eos=eos)
+            words_score += lm.score(" ".join(word), bos=True, eos=eos)
         else:
             # Out-of-vocab (OOV) unigram score for duplicate spaces
-            words_score += lm.score('<unk>', False, False)
+            words_score += lm.score("<unk>", False, False)
     expected_lm_score = lm_weight * words_score + insertion_bonus * len(sent)
 
     # Randomly insert typos and deletes without modifying the original sentence
@@ -270,10 +267,12 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
         labels.insert(pos + 1, delete_label)
 
     # Compute LM score from decoder
-    decoder = CTCBeamDecoder(lm_file=str(lm_file),
-                             lm_weight=lm_weight,
-                             insertion_bonus=insertion_bonus,
-                             delete_key=delete_key)
+    decoder = CTCBeamDecoder(
+        lm_file=str(lm_file),
+        lm_weight=lm_weight,
+        insertion_bonus=insertion_bonus,
+        delete_key=delete_key,
+    )
     blank_label = _charset.null_class
     state = BeamState.init(blank_label, lm=decoder.lm)
     lm_score = 0.0
@@ -285,6 +284,5 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
 
     # Walk through the LM trie and sum up individual LM scores along the
     # decoding path to assert that things add up.
-    lm_score = lm_weight * sum(
-        state.lm_scores) + insertion_bonus * state.lm_node.depth
+    lm_score = lm_weight * sum(state.lm_scores) + insertion_bonus * state.lm_node.depth
     assert abs(lm_score - expected_lm_score) < 1e-4

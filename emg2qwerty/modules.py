@@ -6,6 +6,7 @@ from torch import nn
 
 class SpectrogramNorm(nn.Module):
     """TODO: docstring - channels -> total electrode channels"""
+
     def __init__(self, channels: int) -> None:
         super().__init__()
 
@@ -33,28 +34,32 @@ class SpectrogramNorm(nn.Module):
 
 class RotationInvariantMLP(nn.Module):
     """TODO: docstring"""
+
     def __init__(
         self,
         in_features: int,
         mlp_features: Sequence[int],
         pooling: str = "mean",
-        offsets: Sequence[int] = (-1, 0, 1)) -> None:
+        offsets: Sequence[int] = (-1, 0, 1),
+    ) -> None:
         super().__init__()
 
         assert len(mlp_features) > 0
         mlp_layers = []
         for out_features in mlp_features:
-            mlp_layers.extend([
-                nn.Linear(in_features, out_features),
-                nn.ReLU(inplace=True),
-            ])
+            mlp_layers.extend(
+                [
+                    nn.Linear(in_features, out_features),
+                    nn.ReLU(inplace=True),
+                ]
+            )
             in_features = out_features
         self.mlp = nn.Sequential(*mlp_layers)
 
         assert pooling in ["max", "mean"], f"Unsupported pooling: {pooling}"
         self.pooling = pooling
 
-        self.offsets = offsets if len(offsets) > 0 else (0, )
+        self.offsets = offsets if len(offsets) > 0 else (0,)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs  # (T, N, ...)
@@ -63,8 +68,7 @@ class RotationInvariantMLP(nn.Module):
         # corresponding to the original tensor with its electrode channels
         # shifted by one of ``offsets``:
         # (T, N, ...) -> (T, N, rotation, ...)
-        x = torch.stack([x.roll(offset, dims=2) for offset in self.offsets],
-                        dim=2)
+        x = torch.stack([x.roll(offset, dims=2) for offset in self.offsets], dim=2)
 
         # Flatten features and pass through MLP:
         # (T, N, rotation, ...) -> (T, N, rotation, mlp_features[-1])
@@ -77,13 +81,16 @@ class RotationInvariantMLP(nn.Module):
 
 class MultiBandRotationInvariantMLP(nn.Module):
     """TODO docstring: (T, N, band, ...)"""
-    def __init__(self,
-                 num_bands: int,
-                 in_features: int,
-                 mlp_features: Sequence[int],
-                 pooling: str = "mean",
-                 offsets: Sequence[int] = (-1, 0, 1),
-                 stack_dim: int = 2) -> None:
+
+    def __init__(
+        self,
+        num_bands: int,
+        in_features: int,
+        mlp_features: Sequence[int],
+        pooling: str = "mean",
+        offsets: Sequence[int] = (-1, 0, 1),
+        stack_dim: int = 2,
+    ) -> None:
         super().__init__()
 
         self.num_bands = num_bands
@@ -93,10 +100,10 @@ class MultiBandRotationInvariantMLP(nn.Module):
         self.mlps = nn.ModuleList()
         for i in range(num_bands):
             self.mlps.append(
-                RotationInvariantMLP(in_features,
-                                     mlp_features,
-                                     pooling=pooling,
-                                     offsets=offsets))
+                RotationInvariantMLP(
+                    in_features, mlp_features, pooling=pooling, offsets=offsets
+                )
+            )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         assert inputs.shape[self.stack_dim] == self.num_bands
@@ -110,12 +117,13 @@ class MultiBandRotationInvariantMLP(nn.Module):
 
 class TDSConv2dBlock(nn.Module):
     """TODO: docstring"""
+
     def __init__(self, channels: int, width: int, kernel_width: int) -> None:
         super().__init__()
 
-        self.conv2d = nn.Conv2d(in_channels=channels,
-                                out_channels=channels,
-                                kernel_size=(1, kernel_width))
+        self.conv2d = nn.Conv2d(
+            in_channels=channels, out_channels=channels, kernel_size=(1, kernel_width)
+        )
         self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(channels * width)
 
@@ -141,6 +149,7 @@ class TDSConv2dBlock(nn.Module):
 
 class TDSFullyConnectedBlock(nn.Module):
     """TODO: docstring"""
+
     def __init__(self, num_features: int) -> None:
         super().__init__()
 
@@ -160,22 +169,27 @@ class TDSFullyConnectedBlock(nn.Module):
 
 class TDSConvEncoder(nn.Module):
     """TODO: docstring"""
-    def __init__(self,
-                 num_features: int,
-                 block_channels: Sequence[int] = (24, 24, 24, 24),
-                 kernel_width: int = 32) -> None:
+
+    def __init__(
+        self,
+        num_features: int,
+        block_channels: Sequence[int] = (24, 24, 24, 24),
+        kernel_width: int = 32,
+    ) -> None:
         super().__init__()
 
         assert len(block_channels) > 0
         tds_conv_blocks = []
         for channels in block_channels:
-            assert num_features % channels == 0, (
-                "block_channels must evenly divide num_features")
-            tds_conv_blocks.extend([
-                TDSConv2dBlock(channels, num_features // channels,
-                               kernel_width),
-                TDSFullyConnectedBlock(num_features),
-            ])
+            assert (
+                num_features % channels == 0
+            ), "block_channels must evenly divide num_features"
+            tds_conv_blocks.extend(
+                [
+                    TDSConv2dBlock(channels, num_features // channels, kernel_width),
+                    TDSFullyConnectedBlock(num_features),
+                ]
+            )
         self.tds_conv_blocks = nn.Sequential(*tds_conv_blocks)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:

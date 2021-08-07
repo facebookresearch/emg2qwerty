@@ -1,9 +1,8 @@
 import logging
 import os
 import pprint
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence, List, Tuple, Union
+from typing import Any, List, Mapping, Optional, Sequence, Tuple
 
 import hydra
 import numpy as np
@@ -17,11 +16,14 @@ from torch.utils.data import ConcatDataset, DataLoader
 from emg2qwerty import transforms, utils
 from emg2qwerty.charset import charset
 from emg2qwerty.data import WindowedEmgDataset
-from emg2qwerty.decoder import Decoder
 from emg2qwerty.metrics import CharacterErrorRate
-from emg2qwerty.modules import (MultiBandRotationInvariantMLP, SpectrogramNorm,
-                                TDSConvEncoder)
+from emg2qwerty.modules import (
+    MultiBandRotationInvariantMLP,
+    SpectrogramNorm,
+    TDSConvEncoder,
+)
 from emg2qwerty.transforms import Transform
+
 
 log = logging.getLogger(__name__)
 
@@ -50,26 +52,34 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         self.test_sessions = test_sessions
 
     def setup(self, stage: Optional[str] = None) -> None:
-        self.train_dataset = ConcatDataset([
-            WindowedEmgDataset(
-                hdf5_path,
-                transform=self._train_transforms,
-                window_length=self.window_length,
-                padding=self.padding,
-            ) for hdf5_path in self.train_sessions
-        ])
-        self.val_dataset = ConcatDataset([
-            WindowedEmgDataset(
-                hdf5_path,
-                transform=self._val_transforms,
-                window_length=self.window_length,
-                padding=self.padding,
-            ) for hdf5_path in self.val_sessions
-        ])
-        self.test_dataset = ConcatDataset([
-            WindowedEmgDataset(hdf5_path, transform=self._test_transforms)
-            for hdf5_path in self.test_sessions
-        ])
+        self.train_dataset = ConcatDataset(
+            [
+                WindowedEmgDataset(
+                    hdf5_path,
+                    transform=self._train_transforms,
+                    window_length=self.window_length,
+                    padding=self.padding,
+                )
+                for hdf5_path in self.train_sessions
+            ]
+        )
+        self.val_dataset = ConcatDataset(
+            [
+                WindowedEmgDataset(
+                    hdf5_path,
+                    transform=self._val_transforms,
+                    window_length=self.window_length,
+                    padding=self.padding,
+                )
+                for hdf5_path in self.val_sessions
+            ]
+        )
+        self.test_dataset = ConcatDataset(
+            [
+                WindowedEmgDataset(hdf5_path, transform=self._test_transforms)
+                for hdf5_path in self.test_sessions
+            ]
+        )
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -130,10 +140,13 @@ class TDSConvCTCModule(pl.LightningModule):
             num_bands=num_bands,
             in_features=in_features,
             mlp_features=mlp_features,
-            pooling="mean")
-        self.conv_encoder = TDSConvEncoder(num_features=num_features,
-                                           block_channels=block_channels,
-                                           kernel_width=kernel_width)
+            pooling="mean",
+        )
+        self.conv_encoder = TDSConvEncoder(
+            num_features=num_features,
+            block_channels=block_channels,
+            kernel_width=kernel_width,
+        )
         self.linear = nn.Linear(num_features, charset().num_classes)
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
@@ -155,8 +168,9 @@ class TDSConvCTCModule(pl.LightningModule):
         x = self.linear(x)  # (T, N, num_classes)
         return self.log_softmax(x)  # (T, N, num_classes)
 
-    def _step(self, phase: str, batch: Mapping[str, torch.Tensor], *args,
-              **kwargs) -> torch.Tensor:
+    def _step(
+        self, phase: str, batch: Mapping[str, torch.Tensor], *args, **kwargs
+    ) -> torch.Tensor:
         inputs = batch["inputs"]
         targets = batch["targets"]
         input_lengths = batch["input_lengths"]
@@ -186,12 +200,12 @@ class TDSConvCTCModule(pl.LightningModule):
             # emissions: (T, N, num_classes)
             self.decoder.reset()
             pred_labels, _ = self.decoder.decode(
-                emissions=emissions[:emission_lengths[i], i],
+                emissions=emissions[: emission_lengths[i], i],
                 timestamps=np.arange(emission_lengths[i]),
             )
 
             # Unpad target labels for batch entry. targets: (T, N)
-            target_labels = targets[:target_lengths[i], i]
+            target_labels = targets[: target_lengths[i], i]
 
             self.cer.update(pred_labels, target_labels)
 
@@ -256,27 +270,33 @@ def main(config: DictConfig):
     test_sessions = _full_paths(config.dataset.root, config.dataset.test)
 
     # Instantiate LightningModule
-    log.info(f'Instantiating LightningModule {config.module}')
-    module = instantiate(config.module,
-                         optimizer=config.optimizer,
-                         lr_scheduler=config.lr_scheduler,
-                         decoder=config.decoder,
-                         _recursive_=False)
+    log.info(f"Instantiating LightningModule {config.module}")
+    module = instantiate(
+        config.module,
+        optimizer=config.optimizer,
+        lr_scheduler=config.lr_scheduler,
+        decoder=config.decoder,
+        _recursive_=False,
+    )
     if config.checkpoint is not None:
-        log.info(f'Loading from checkpoint {config.checkpoint}')
-        module = module.load_from_checkpoint(config.checkpoint,
-                                             optimizer=config.optimizer,
-                                             lr_scheduler=config.lr_scheduler,
-                                             decoder=config.decoder)
+        log.info(f"Loading from checkpoint {config.checkpoint}")
+        module = module.load_from_checkpoint(
+            config.checkpoint,
+            optimizer=config.optimizer,
+            lr_scheduler=config.lr_scheduler,
+            decoder=config.decoder,
+        )
 
     # Instantiate LightningDataModule
-    log.info(f'Instantiating LightningDataModule {config.datamodule}')
-    datamodule = instantiate(config.datamodule,
-                             batch_size=config.batch_size,
-                             num_workers=config.num_workers,
-                             train_sessions=train_sessions,
-                             val_sessions=val_sessions,
-                             test_sessions=test_sessions)
+    log.info(f"Instantiating LightningDataModule {config.datamodule}")
+    datamodule = instantiate(
+        config.datamodule,
+        batch_size=config.batch_size,
+        num_workers=config.num_workers,
+        train_sessions=train_sessions,
+        val_sessions=val_sessions,
+        test_sessions=test_sessions,
+    )
 
     # Instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
@@ -300,9 +320,9 @@ def main(config: DictConfig):
     test_metrics = trainer.test(module, datamodule)
 
     results = {
-        'val_metrics': val_metrics,
-        'test_metrics': test_metrics,
-        'best_model_path': trainer.checkpoint_callback.best_model_path,
+        "val_metrics": val_metrics,
+        "test_metrics": test_metrics,
+        "best_model_path": trainer.checkpoint_callback.best_model_path,
     }
     pprint.pprint(results, sort_dicts=False)
 

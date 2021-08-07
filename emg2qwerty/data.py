@@ -1,8 +1,18 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import (Any, ClassVar, Dict, KeysView, List, Mapping, Optional,
-                    Sequence, Tuple, Union)
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    KeysView,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import h5py
 import numpy as np
@@ -99,9 +109,7 @@ class Emg2QwertySessionData:
     def __getitem__(self, key: slice) -> np.ndarray:
         return self.timeseries[key]
 
-    def slice(self,
-              start_t: float = -np.inf,
-              end_t: float = np.inf) -> np.ndarray:
+    def slice(self, start_t: float = -np.inf, end_t: float = np.inf) -> np.ndarray:
         """Load and return a contiguous slice of the timeseries windowed
         by the provided start and end timestamps.
 
@@ -116,17 +124,15 @@ class Emg2QwertySessionData:
         start_idx, end_idx = self.timestamps.searchsorted([start_t, end_t])
         return self[start_idx:end_idx]
 
-    def ground_truth(self,
-                     start_t: float = -np.inf,
-                     end_t: float = np.inf) -> "LabelData":
+    def ground_truth(
+        self, start_t: float = -np.inf, end_t: float = np.inf
+    ) -> "LabelData":
         if self.condition == "on_keyboard":
-            return LabelData.from_keystrokes(self.keystrokes,
-                                             start_t=start_t,
-                                             end_t=end_t)
+            return LabelData.from_keystrokes(
+                self.keystrokes, start_t=start_t, end_t=end_t
+            )
         else:
-            return LabelData.from_prompts(self.prompts,
-                                          start_t=start_t,
-                                          end_t=end_t)
+            return LabelData.from_prompts(self.prompts, start_t=start_t, end_t=end_t)
 
     @property
     def fields(self) -> KeysView[str]:
@@ -179,8 +185,9 @@ class Emg2QwertySessionData:
         return self.metadata[self.PROMPTS]
 
     def __str__(self) -> str:
-        return (f"{self.__class__.__name__} {self.session_name} "
-                f"({len(self)} samples)")
+        return (
+            f"{self.__class__.__name__} {self.session_name} " f"({len(self)} samples)"
+        )
 
 
 @dataclass
@@ -206,10 +213,12 @@ class LabelData:
             assert (np.diff(self.timestamps) >= 0).all(), "Not monotonic"
 
     @classmethod
-    def from_keystrokes(cls,
-                        keystrokes: Sequence[Mapping[str, Any]],
-                        start_t: float = -np.inf,
-                        end_t: float = np.inf) -> "LabelData":
+    def from_keystrokes(
+        cls,
+        keystrokes: Sequence[Mapping[str, Any]],
+        start_t: float = -np.inf,
+        end_t: float = np.inf,
+    ) -> "LabelData":
         """Create a new instance of ``LabelData`` from a sequence of
         keystrokes between the provided start and end timestamps, after
         normalizing and cleaning up as per ``CharacterSet``. The returned
@@ -233,9 +242,9 @@ class LabelData:
         return label_data
 
     @classmethod
-    def from_keystroke(cls,
-                       keystroke: Union[str, Mapping[str, Any]],
-                       timestamp: Optional[float] = None) -> "LabelData":
+    def from_keystroke(
+        cls, keystroke: Union[str, Mapping[str, Any]], timestamp: Optional[float] = None
+    ) -> "LabelData":
         """Create a new instance of ``LabelData`` from a single keystroke,
         after normalizing and cleaning up as per ``CharacterSet``.
 
@@ -262,11 +271,13 @@ class LabelData:
         return cls(label_str, timestamps)
 
     @classmethod
-    def from_prompts(cls,
-                     prompts: Sequence[Mapping[str, Any]],
-                     enforce_newline: bool = True,
-                     start_t: float = -np.inf,
-                     end_t: float = np.inf) -> "LabelData":
+    def from_prompts(
+        cls,
+        prompts: Sequence[Mapping[str, Any]],
+        enforce_newline: bool = True,
+        start_t: float = -np.inf,
+        end_t: float = np.inf,
+    ) -> "LabelData":
         """Create a new instance of ``LabelData`` from a sequence of prompts
         between the provided start and end timestamps, after normalizing and
         cleaning up as per ``CharacterSet``. The returned object does not
@@ -287,14 +298,13 @@ class LabelData:
             if prompt["start"] > end_t:
                 break
             if prompt["start"] >= start_t:
-                label_data += cls.from_prompt(prompt,
-                                              enforce_newline=enforce_newline)
+                label_data += cls.from_prompt(prompt, enforce_newline=enforce_newline)
         return label_data
 
     @classmethod
-    def from_prompt(cls,
-                    prompt: Union[str, Mapping[str, Any]],
-                    enforce_newline: bool = True) -> "LabelData":
+    def from_prompt(
+        cls, prompt: Union[str, Mapping[str, Any]], enforce_newline: bool = True
+    ) -> "LabelData":
         """Create a new instance of ``LabelData`` from a single prompt, after
         normalizing and cleaning up as per ``CharacterSet``. The returned
         object does not include character-level timestamps.
@@ -322,9 +332,8 @@ class LabelData:
 
     @classmethod
     def from_labels(
-            cls,
-            labels: Sequence[int],
-            timestamps: Optional[Sequence[float]] = None) -> "LabelData":
+        cls, labels: Sequence[int], timestamps: Optional[Sequence[float]] = None
+    ) -> "LabelData":
         """Create a new instance of ``LabelData`` from integer labels
         and optionally together with its corresponding timestamps."""
         label_str = cls._charset.labels_to_str(labels)
@@ -374,8 +383,9 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
 
     def __post_init__(self) -> None:
         with Emg2QwertySessionData(self.hdf5_path) as session:
-            assert session.condition == "on_keyboard", (
-                f"Unsupported condition {self.session.condition}")
+            assert (
+                session.condition == "on_keyboard"
+            ), f"Unsupported condition {self.session.condition}"
             self.session_length = len(session)
 
         if self.window_length is None:
@@ -393,7 +403,7 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         # Lazy init `Emg2QwertySessionData` per dataloading worker
         # since `h5py.File` objects can't be picked
-        if not hasattr(self, 'session'):
+        if not hasattr(self, "session"):
             self.session = Emg2QwertySessionData(self.hdf5_path)
 
         offset = idx * self.stride
@@ -442,10 +452,12 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
         target_batch = nn.utils.rnn.pad_sequence(targets)  # (T, N)
 
         # Lengths of unpadded input and target sequences for each batch entry
-        input_lengths = torch.as_tensor([len(input) for input in inputs],
-                                        dtype=torch.int32)
-        target_lengths = torch.as_tensor([len(target) for target in targets],
-                                         dtype=torch.int32)
+        input_lengths = torch.as_tensor(
+            [len(input) for input in inputs], dtype=torch.int32
+        )
+        target_lengths = torch.as_tensor(
+            [len(target) for target in targets], dtype=torch.int32
+        )
 
         return {
             "inputs": input_batch,

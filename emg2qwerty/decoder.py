@@ -4,7 +4,7 @@ import abc
 import hashlib
 import math
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, Iterator
+from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple
 
 import kenlm
 import numpy as np
@@ -28,6 +28,7 @@ def logsumexp(*xs: float) -> float:
 class Decoder(abc.ABC):
     """Base class for a stateful decoder that takes in emissions and returns
     decoded label sequences."""
+
     _charset: CharacterSet = charset()
 
     @abc.abstractmethod
@@ -36,10 +37,9 @@ class Decoder(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def decode(self,
-               emissions: np.ndarray,
-               timestamps: np.ndarray,
-               finish: bool = False) -> Tuple[List[int], List[Any]]:
+    def decode(
+        self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
+    ) -> Tuple[List[int], List[Any]]:
         """Update decoder state and return the entire decoding.
 
         Args:
@@ -63,10 +63,9 @@ class CTCGreedyDecoder(Decoder):
         self.timestamps: List[Any] = []
         self.prev_label = self._charset.null_class
 
-    def decode(self,
-               emissions: np.ndarray,
-               timestamps: np.ndarray,
-               finish: bool = False) -> Tuple[List[int], List[Any]]:
+    def decode(
+        self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
+    ) -> Tuple[List[int], List[Any]]:
         assert emissions.ndim == 2  # (T, num_classes)
         assert emissions.shape[1] == self._charset.num_classes
         assert len(emissions) == len(timestamps)
@@ -294,13 +293,17 @@ class BeamState:
         return hash_
 
     def __str__(self) -> str:
-        o = (f'BeamState: label={self.label}'
-             f' len(decoding)={len(self.decoding)}'
-             f' p_b={self.p_b} p_nb={self.p_nb} p_total={self.p_total}')
+        o = (
+            f"BeamState: label={self.label}"
+            f" len(decoding)={len(self.decoding)}"
+            f" p_b={self.p_b} p_nb={self.p_nb} p_total={self.p_total}"
+        )
         if self.lm_node is not None:
-            o += (f' len(lm_states)={len(self.lm_states)}'
-                  f' lm_score={self.lm_score}'
-                  f' sum(lm_scores)={sum(self.lm_scores)}')
+            o += (
+                f" len(lm_states)={len(self.lm_states)}"
+                f" lm_score={self.lm_score}"
+                f" sum(lm_scores)={sum(self.lm_scores)}"
+            )
         return o
 
 
@@ -345,6 +348,7 @@ class CTCBeamDecoder(Decoder):
         delete_key (str): Optional key for deletion/backspace in the
             character set if applicable. (default: "Key.backspace")
     """
+
     EOW: ClassVar[str] = "</s>"  # KenLM EOS token, used here as end-of-word
     OOV: ClassVar[str] = "<unk>"  # KenLM out-of-vocabulary (OOV) token
 
@@ -395,10 +399,9 @@ class CTCBeamDecoder(Decoder):
         # self.beam is already sorted
         return [(b.decoding, b.timestamps) for b in self.beam[:k]]
 
-    def decode(self,
-               emissions: np.ndarray,
-               timestamps: np.ndarray,
-               finish: bool = False) -> Tuple[List[int], List[Any]]:
+    def decode(
+        self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
+    ) -> Tuple[List[int], List[Any]]:
         assert emissions.ndim == 2  # (T, num_classes)
         assert emissions.shape[1] == self._charset.num_classes
         assert len(emissions) == len(timestamps)
@@ -407,7 +410,7 @@ class CTCBeamDecoder(Decoder):
         # `max_labels_per_timestep` labels at each timestep.
         indices = np.argsort(-emissions, axis=1)
         if self.max_labels_per_timestep > 0:
-            indices = indices[:, :self.max_labels_per_timestep]
+            indices = indices[:, : self.max_labels_per_timestep]
 
         for t in range(len(emissions)):
             # Dict to store the next set of candidate beams
@@ -415,39 +418,38 @@ class CTCBeamDecoder(Decoder):
 
             for prev in self.beam:  # Loop over current candidates
                 # CTC blank or repeat scenario
-                next_ = self.next_state(prev_state=prev,
-                                        label=None,
-                                        timestamp=None,
-                                        cache=next_beam)
+                next_ = self.next_state(
+                    prev_state=prev, label=None, timestamp=None, cache=next_beam
+                )
 
                 for label in indices[t]:  # Loop over labels at time t
                     p = emissions[t, label]
                     timestamp = timestamps[t]
 
                     if label == self._charset.null_class:  # Blank label
-                        next_.p_b = logsumexp(next_.p_b, prev.p_b + p,
-                                              prev.p_nb + p)
+                        next_.p_b = logsumexp(next_.p_b, prev.p_b + p, prev.p_nb + p)
                         continue
 
-                    next_n = self.next_state(prev_state=prev,
-                                             label=label,
-                                             timestamp=timestamp,
-                                             cache=next_beam)
+                    next_n = self.next_state(
+                        prev_state=prev,
+                        label=label,
+                        timestamp=timestamp,
+                        cache=next_beam,
+                    )
                     p_lm = self.lm_score(prev, next_n)
 
                     if label == prev.label:
                         next_.p_nb = logsumexp(next_.p_nb, prev.p_nb + p)
-                        next_n.p_nb = logsumexp(next_n.p_nb,
-                                                prev.p_b + p + p_lm)
+                        next_n.p_nb = logsumexp(next_n.p_nb, prev.p_b + p + p_lm)
                     else:
-                        next_n.p_nb = logsumexp(next_n.p_nb,
-                                                prev.p_b + p + p_lm,
-                                                prev.p_nb + p + p_lm)
+                        next_n.p_nb = logsumexp(
+                            next_n.p_nb, prev.p_b + p + p_lm, prev.p_nb + p + p_lm
+                        )
 
-            self.beam = sorted(next_beam.values(),
-                               key=lambda x: x.p_total,
-                               reverse=True)
-            self.beam = self.beam[:self.beam_size]
+            self.beam = sorted(
+                next_beam.values(), key=lambda x: x.p_total, reverse=True
+            )
+            self.beam = self.beam[: self.beam_size]
 
         if finish:
             self.finish()
@@ -475,11 +477,13 @@ class CTCBeamDecoder(Decoder):
         self.beam = sorted(self.beam, key=lambda x: x.p_total, reverse=True)
         return self.beam[0].decoding, self.beam[0].timestamps
 
-    def next_state(self,
-                   prev_state: BeamState,
-                   label: Optional[int] = None,
-                   timestamp: Optional[Any] = None,
-                   cache: Optional[Dict[Any, BeamState]] = None) -> BeamState:
+    def next_state(
+        self,
+        prev_state: BeamState,
+        label: Optional[int] = None,
+        timestamp: Optional[Any] = None,
+        cache: Optional[Dict[Any, BeamState]] = None,
+    ) -> BeamState:
         """Returns the next BeamState by extending `prev_state` with `label`
         and applying LM as appropriate.
 
@@ -517,16 +521,20 @@ class CTCBeamDecoder(Decoder):
             # label as before, but safely backtrack up the LM trie by one node
             # to reach the LM state as a result of deleting the prev label.
             label_node = prev_state.label_node.child((label, timestamp))
-            lm_node = prev_state.lm_node if prev_state.lm_node.is_root \
+            lm_node = (
+                prev_state.lm_node
+                if prev_state.lm_node.is_root
                 else prev_state.lm_node.parent
+            )
 
         next_state = BeamState(label_node, lm_node, hash_=hash_)
         if cache is not None:
             cache[key] = next_state
         return next_state
 
-    def apply_lm(self, prev_lm_state: kenlm.State,
-                 label: int) -> Tuple[kenlm.State, float]:
+    def apply_lm(
+        self, prev_lm_state: kenlm.State, label: int
+    ) -> Tuple[kenlm.State, float]:
         """Takes in KenLM state and a token label, and returns a tuple of the
         next KenLM state on applying the token as well as the LM score.
 

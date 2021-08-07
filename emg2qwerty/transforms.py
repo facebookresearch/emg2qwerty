@@ -5,8 +5,9 @@ import numpy as np
 import torch
 import torchaudio
 
-TTransformIn = TypeVar('TTransformIn')
-TTransformOut = TypeVar('TTransformOut')
+
+TTransformIn = TypeVar("TTransformIn")
+TTransformOut = TypeVar("TTransformOut")
 Transform = Callable[[TTransformIn], TTransformOut]
 
 
@@ -25,12 +26,13 @@ class ToTensor:
             ``fields``. (default: 1)
     """
 
-    fields: Sequence[str] = ('emg_left', 'emg_right')
+    fields: Sequence[str] = ("emg_left", "emg_right")
     stack_dim: int = 1
 
     def __call__(self, data: np.ndarray) -> torch.Tensor:
-        return torch.stack([torch.as_tensor(data[f]) for f in self.fields],
-                           dim=self.stack_dim)
+        return torch.stack(
+            [torch.as_tensor(data[f]) for f in self.fields], dim=self.stack_dim
+        )
 
 
 @dataclass
@@ -66,7 +68,8 @@ class ForEach:
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         return torch.stack(
             [self.transform(t) for t in tensor.unbind(self.batch_dim)],
-            dim=self.batch_dim)
+            dim=self.batch_dim,
+        )
 
 
 @dataclass
@@ -159,7 +162,8 @@ class LogSpectrogram:
             # Disable centering of FFT windows to avoid padding inconsistencies
             # between train and test (due to differing window lengths), as well
             # as to be more faithful to real-time/streaming execution.
-            center=False)
+            center=False,
+        )
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         x = tensor.transpose(0, -1)  # (T, ..., C) -> (C, ..., T)
@@ -178,14 +182,16 @@ class SpecAugment:
     n_freq_masks: int = 0
     freq_mask_param: int = 0
     iid_freq_masks: bool = True
-    mask_value: float = 0.
+    mask_value: float = 0.0
 
     def __post_init__(self) -> None:
         # TODO: mean mask value, iid
         self.time_mask = torchaudio.transforms.TimeMasking(
-            self.time_mask_param, iid_masks=self.iid_time_masks)
+            self.time_mask_param, iid_masks=self.iid_time_masks
+        )
         self.freq_mask = torchaudio.transforms.FrequencyMasking(
-            self.freq_mask_param, iid_masks=self.iid_freq_masks)
+            self.freq_mask_param, iid_masks=self.iid_freq_masks
+        )
 
     def __call__(self, specgram: torch.Tensor) -> torch.Tensor:
         # (T, ..., freq, C) -> (C, ..., freq, T)
