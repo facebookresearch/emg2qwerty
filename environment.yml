@@ -21,10 +21,10 @@ dependencies:
   - pytest
   - hypothesis
   - click
-  - mypy
+  - pre-commit
   - black
   - flake8
-  - pre-commit
+  - mypy
   - pip
   - pip:
     - hydra-core>=1.1.0

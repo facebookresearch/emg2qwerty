@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 from pathlib import Path
 from typing import (
     Any,
@@ -202,12 +202,12 @@ class LabelData:
     _charset: ClassVar[CharacterSet] = charset()
 
     label_str: str
-    timestamps: Optional[Sequence[float]] = None
+    timestamps: InitVar[Optional[Sequence[float]]] = None
 
-    def __post_init__(self) -> None:
-        if self.timestamps is not None:
-            self.timestamps = np.array(self.timestamps)
-
+    def __post_init__(self, timestamps: Optional[Sequence[float]]) -> None:
+        self.timestamps: Optional[np.ndarray] = None
+        if timestamps is not None:
+            self.timestamps = np.array(timestamps)
             assert self.timestamps.ndim == 1
             assert len(self.timestamps) == len(self.label_str)
             assert (np.diff(self.timestamps) >= 0).all(), "Not monotonic"
@@ -348,7 +348,7 @@ class LabelData:
     def __len__(self) -> int:
         return len(self.label_str)
 
-    def __eq__(self, other: "LabelData") -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, LabelData):
             return NotImplemented
         return self.label_str == other.label_str
@@ -375,26 +375,31 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     """TODO: docstring"""
 
     hdf5_path: Path
-    window_length: Optional[int] = None
-    stride: Optional[int] = None
-    padding: Tuple[int, int] = (0, 0)
+    window_length: InitVar[Optional[int]] = None
+    stride: InitVar[Optional[int]] = None
+    padding: InitVar[Tuple[int, int]] = (0, 0)
     jitter: bool = True
     transform: Transform[np.ndarray, torch.Tensor] = transforms.ToTensor()
 
-    def __post_init__(self) -> None:
+    def __post_init__(
+        self,
+        window_length: Optional[int],
+        stride: Optional[int],
+        padding: Tuple[int, int],
+    ) -> None:
         with Emg2QwertySessionData(self.hdf5_path) as session:
             assert (
                 session.condition == "on_keyboard"
             ), f"Unsupported condition {self.session.condition}"
             self.session_length = len(session)
 
-        if self.window_length is None:
-            self.window_length = self.session_length
-        if self.stride is None:
-            self.stride = self.window_length
+        self.window_length = (
+            window_length if window_length is not None else self.session_length
+        )
+        self.stride = stride if stride is not None else self.window_length
         assert self.window_length > 0 and self.stride > 0
 
-        (self.left_padding, self.right_padding) = self.padding
+        (self.left_padding, self.right_padding) = padding
         assert self.left_padding >= 0 and self.right_padding >= 0
 
     def __len__(self) -> int:

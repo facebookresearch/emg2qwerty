@@ -72,12 +72,13 @@ def test_beamstate_lm():
     labels = _charset.str_to_labels(sent)
 
     blank_label = _charset.null_class
-    lm_file = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
-    lm = kenlm.Model(str(lm_file))
+    lm_path = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
+    lm = kenlm.Model(str(lm_path))
     state = BeamState.init(blank_label, lm=lm)
 
     assert state.label_node.is_root
     assert state.label_node.depth == 0
+    assert state.lm_node is not None
     assert state.lm_node.is_root
     assert state.lm_node.depth == 0
 
@@ -90,6 +91,7 @@ def test_beamstate_lm():
     # Test state extension with new labels
     for i, label in enumerate(labels):
         prev_state = state
+        assert prev_state.lm_node is not None
 
         lm_state = kenlm.State()
         lm_score = lm.BaseScore(prev_state.lm_state, keys[i], lm_state)
@@ -101,6 +103,7 @@ def test_beamstate_lm():
         assert not state.label_node.is_root
         assert state.label_node.parent == prev_state.label_node
         assert state.label_node.depth == i + 1
+        assert state.lm_node is not None
         assert not state.lm_node.is_root
         assert state.lm_node.parent == prev_state.lm_node
         assert state.lm_node.depth == i + 1
@@ -128,8 +131,8 @@ def test_beamstate_multiple_paths():
     classes = [(c, ord(c)) for c in ["a", "b"]]
     _charset = CharacterSet(_key_to_unicode=OrderedDict(classes))
 
-    lm_file = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
-    decoder = CTCBeamDecoder(_charset=_charset, lm_file=str(lm_file), delete_key=None)
+    lm_path = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
+    decoder = CTCBeamDecoder(_charset=_charset, lm_path=str(lm_path), delete_key=None)
     blank_label = _charset.null_class
     init_state = BeamState.init(blank_label, lm=decoder.lm)
 
@@ -191,8 +194,8 @@ def test_timestamps():
     classes = [(c, ord(c)) for c in ["a", "b"]]
     _charset = CharacterSet(_key_to_unicode=OrderedDict(classes))
 
-    lm_file = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
-    decoder = CTCBeamDecoder(_charset=_charset, lm_file=str(lm_file), delete_key=None)
+    lm_path = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
+    decoder = CTCBeamDecoder(_charset=_charset, lm_path=str(lm_path), delete_key=None)
 
     # Two paths leading to the same decoding 'ab'
     path1 = "abb"
@@ -209,12 +212,12 @@ def test_timestamps():
 
         decoder.beam_size = beam_size
         decoder.reset()
-        decoding, timestamps = decoder.decode(
+        decoded_labels, timestamps = decoder.decode(
             emissions=emissions, timestamps=np.arange(T)
         )
 
-        decoding = _charset.labels_to_str(decoding)
-        return decoding, timestamps
+        decoded_str = _charset.labels_to_str(decoded_labels)
+        return decoded_str, timestamps
 
     # Scenario 1: path1 has higher prob and path2 gets kicked out.
     # Token 'b' should have onset timestamp corresponding to path1.
@@ -241,8 +244,8 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
     sent = "the quick  brown"
     labels = _charset.str_to_labels(sent)
 
-    lm_file = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
-    lm = kenlm.Model(str(lm_file))
+    lm_path = Path(__file__).parents[0].joinpath("reuters-3-gram-char-lm.arpa")
+    lm = kenlm.Model(str(lm_path))
 
     # Expected LM score:
     # lm_weight * sum(lm score for each word) + insertion_bonus * len(sentence)
@@ -268,7 +271,7 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
 
     # Compute LM score from decoder
     decoder = CTCBeamDecoder(
-        lm_file=str(lm_file),
+        lm_path=str(lm_path),
         lm_weight=lm_weight,
         insertion_bonus=insertion_bonus,
         delete_key=delete_key,
@@ -284,5 +287,6 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
 
     # Walk through the LM trie and sum up individual LM scores along the
     # decoding path to assert that things add up.
+    assert state.lm_node is not None
     lm_score = lm_weight * sum(state.lm_scores) + insertion_bonus * state.lm_node.depth
     assert abs(lm_score - expected_lm_score) < 1e-4

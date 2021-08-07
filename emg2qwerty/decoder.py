@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import abc
 import hashlib
 import math
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple
 
 import kenlm
@@ -25,18 +24,16 @@ def logsumexp(*xs: float) -> float:
 
 
 @dataclass
-class Decoder(abc.ABC):
+class Decoder:
     """Base class for a stateful decoder that takes in emissions and returns
     decoded label sequences."""
 
     _charset: CharacterSet = charset()
 
-    @abc.abstractmethod
     def reset(self) -> None:
         """Reset decoder state."""
-        pass
+        raise NotImplementedError
 
-    @abc.abstractmethod
     def decode(
         self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
     ) -> Tuple[List[int], List[Any]]:
@@ -50,7 +47,7 @@ class Decoder(abc.ABC):
         Return:
             A tuple of decoded labels and corresponding timestamps.
         """
-        pass
+        raise NotImplementedError
 
 
 @dataclass
@@ -189,17 +186,19 @@ class BeamState:
     lm_node: Optional[TrieNode] = None
     p_b: float = -np.inf
     p_nb: float = -np.inf
-    hash_: Optional[hashlib._Hash] = None
+    hash_: InitVar[Optional[hashlib._Hash]] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, hash_: Optional[hashlib._Hash]) -> None:
         # Hash object for efficiently keying the decoded prefix into a dict
         # independent of the length of the decoding / number of timesteps.
-        if self.hash_ is None:
+        if hash_ is None:
             self.hash_ = hashlib.sha256()
             self.hash_.update(bytes(self.decoding))
+        else:
+            self.hash_ = hash_
 
     @classmethod
-    def init(cls, blank_label: int, lm: Optional[kenlm.Model] = None) -> None:
+    def init(cls, blank_label: int, lm: Optional[kenlm.Model] = None) -> "BeamState":
         """Initialize a new BeamState with empty sequence (CTC blank label),
         probability of 1 for ending in blank and 0 for non-blank.
 
@@ -337,8 +336,8 @@ class CTCBeamDecoder(Decoder):
             ranked by their scores and only the specified number of highest
             scoring labels are considered for the beam update. Otherwise, all
             output labels are considered. (default: -1)
-        lm_file (str): Optional KenLM n-gram language model file in ARPA or
-            binary format. (default: None)
+        lm_path (str): Path to optional KenLM n-gram language model file
+            in ARPA or binary format. (default: None)
         lm_weight (float): Weight of the language model scores relative to the
             emission probabilities. (default: 1.2)
         insertion_bonus (float): Character insertion bonus to prevent favoring
@@ -354,15 +353,16 @@ class CTCBeamDecoder(Decoder):
 
     beam_size: int = 50
     max_labels_per_timestep: int = -1
-    lm_file: Optional[str] = None
+    lm_path: Optional[str] = None
     lm_weight: float = 2.0
     insertion_bonus: float = 2.0
     delete_key: Optional[str] = "Key.backspace"
 
     def __post_init__(self) -> None:
         # Initialize language model if provided
-        if self.lm_file is not None:
-            self.lm = kenlm.Model(self.lm_file)
+        self.lm: Optional[kenlm.Model] = None
+        if self.lm_path is not None:
+            self.lm = kenlm.Model(self.lm_path)
 
             # KenLM state correponding to beginning-of-sentence token <s>, but
             # actually meaning beginning-of-word (BOW) in our usage.
@@ -378,13 +378,10 @@ class CTCBeamDecoder(Decoder):
             # so that the OOV score is equal to that of the unigram '<unk>'
             # and not the trigram '<s><unk></s>'.
             self.oov_score = self.lm.score(self.OOV, bos=False, eos=False)
-        else:
-            self.lm = None
 
+        self.delete_label: Optional[int] = None
         if self.delete_key is not None:
             self.delete_label = self._charset.key_to_label(self.delete_key)
-        else:
-            self.delete_label = None
 
         self.reset()
 

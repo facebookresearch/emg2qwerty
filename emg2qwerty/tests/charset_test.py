@@ -1,4 +1,5 @@
 import string
+from typing import List, Tuple
 
 from emg2qwerty.charset import charset
 
@@ -46,7 +47,7 @@ def test_str_to_keys():
 
 def test_keys_to_str():
     _charset = charset()
-    test_samples = [
+    test_samples: List[Tuple[List[str], str]] = [
         ([], ""),
         (list(string.ascii_lowercase), string.ascii_lowercase),
         (list(string.ascii_uppercase), string.ascii_uppercase),
