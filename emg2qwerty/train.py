@@ -114,9 +114,10 @@ class TDSConvCTCModule(pl.LightningModule):
         kernel_width: int,
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
-        decoder: Decoder,
+        decoder: DictConfig,
     ) -> None:
         super().__init__()
+        self.save_hyperparameters()
 
         # Constants for readability
         num_bands = 2
@@ -142,9 +143,8 @@ class TDSConvCTCModule(pl.LightningModule):
         # Metric
         self.cer = CharacterErrorRate()
 
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
-        self.decoder = decoder
+        # Decoder
+        self.decoder = instantiate(decoder)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs  # (T, N, bands=2, freq, electrode_channels=16)
@@ -223,8 +223,8 @@ class TDSConvCTCModule(pl.LightningModule):
     def configure_optimizers(self):
         return utils.instantiate_optimizer_and_scheduler(
             self.parameters(),
-            optimizer_config=self.optimizer,
-            lr_scheduler_config=self.lr_scheduler,
+            optimizer_config=self.hparams.optimizer,
+            lr_scheduler_config=self.hparams.lr_scheduler,
         )
 
 
@@ -257,18 +257,17 @@ def main(config: DictConfig):
 
     # Instantiate LightningModule
     log.info(f'Instantiating LightningModule {config.module}')
-    decoder = instantiate(config.decoder)
     module = instantiate(config.module,
                          optimizer=config.optimizer,
                          lr_scheduler=config.lr_scheduler,
-                         decoder=decoder,
+                         decoder=config.decoder,
                          _recursive_=False)
     if config.checkpoint is not None:
         log.info(f'Loading from checkpoint {config.checkpoint}')
         module = module.load_from_checkpoint(config.checkpoint,
                                              optimizer=config.optimizer,
                                              lr_scheduler=config.lr_scheduler,
-                                             decoder=decoder)
+                                             decoder=config.decoder)
 
     # Instantiate LightningDataModule
     log.info(f'Instantiating LightningDataModule {config.datamodule}')
