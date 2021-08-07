@@ -11,10 +11,14 @@ import nltk
 
 from emg2qwerty.charset import charset
 
-LM_VOCABULARY = set([
-    charset().unicode_to_key(c) for c in charset().allowed_unicodes
-    if chr(c).isalpha()
-])
+
+LM_VOCABULARY = set(
+    [
+        charset().unicode_to_key(c)
+        for c in charset().allowed_unicodes
+        if chr(c).isalpha()
+    ]
+)
 
 
 def word_in_vocabulary(word: str) -> bool:

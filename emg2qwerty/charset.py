@@ -1,9 +1,10 @@
 import string
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import ClassVar, List, Mapping, Optional, Sequence, Set, Tuple, Union
+from typing import ClassVar, List, Mapping, Optional, Sequence, Tuple, Union
 
 import unidecode
+
 
 UniChar = str  # Unicode character
 KeyChar = str  # pynput keyboard.Key
@@ -47,10 +48,10 @@ class CharacterSet:
             and pynput keys to their corresponding unicode values. Order
             matters for class label generation. (default: ``KEY_TO_UNICODE``)
     """
+
     # Tuples of supported chars and corresponding unicode values.
     CHAR_TO_UNICODE: ClassVar[List[Tuple[UniChar, int]]] = [
-        (c, ord(c))
-        for c in string.ascii_letters + string.digits + string.punctuation
+        (c, ord(c)) for c in string.ascii_letters + string.digits + string.punctuation
     ]
 
     # Tuples of supported modifier keys (in pynput representation) and
@@ -65,10 +66,12 @@ class CharacterSet:
 
     # Map of supported characters/keys to unicode values.
     # NOTE: The order matters for class label generation.
-    KEY_TO_UNICODE: ClassVar[OrderedDict] = OrderedDict([
-        *CHAR_TO_UNICODE,
-        *MODIFIER_TO_UNICODE,
-    ])
+    KEY_TO_UNICODE: ClassVar[OrderedDict] = OrderedDict(
+        [
+            *CHAR_TO_UNICODE,
+            *MODIFIER_TO_UNICODE,
+        ]
+    )
 
     # Map of unicode chars to pynput key representations.
     UNICHAR_TO_KEY: ClassVar[Mapping[UniChar, KeyChar]] = {
@@ -96,7 +99,8 @@ class CharacterSet:
     }
 
     _key_to_unicode: OrderedDict = field(
-        default_factory=lambda: CharacterSet.KEY_TO_UNICODE)
+        default_factory=lambda: CharacterSet.KEY_TO_UNICODE
+    )
 
     def __post_init__(self) -> None:
         self._unicode_to_key = {v: k for k, v in self._key_to_unicode.items()}
@@ -215,6 +219,7 @@ class CharacterSet:
 
         NOTE: This doesn NOT filter out out-of-vocabulary keys, directly call
         `clean_keys()` to perform both normalization and filtering."""
+
         def _normalize_key(key: KeyChar) -> KeyChar:
             if key in self:  # Already normalized
                 return key

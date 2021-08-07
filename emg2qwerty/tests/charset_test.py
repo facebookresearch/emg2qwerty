@@ -11,7 +11,7 @@ def test_clean_str():
         ("\n\r\b\x08", "⏎⏎⌫⌫"),
         ("⏎\n⇧⌫\b", "⏎⏎⇧⌫⌫"),
         ("⏎\n⇧⌫�\b", "⏎⏎⇧⌫⌫"),
-        ("’“”—", "\'\"\"-"),
+        ("’“”—", '\'""-'),
     ]
 
     for _input, expected in test_samples:
@@ -25,10 +25,19 @@ def test_str_to_keys():
         (string.ascii_lowercase, list(string.ascii_lowercase)),
         (string.ascii_uppercase, list(string.ascii_uppercase)),
         (string.punctuation, list(string.punctuation)),
-        ("\x08⌫⏎\n\r \x20⇧", [
-            'Key.backspace', 'Key.backspace', 'Key.enter', 'Key.enter',
-            'Key.enter', 'Key.space', 'Key.space', 'Key.shift'
-        ]),
+        (
+            "\x08⌫⏎\n\r \x20⇧",
+            [
+                "Key.backspace",
+                "Key.backspace",
+                "Key.enter",
+                "Key.enter",
+                "Key.enter",
+                "Key.space",
+                "Key.space",
+                "Key.shift",
+            ],
+        ),
     ]
 
     for _input, expected in test_samples:
@@ -42,10 +51,19 @@ def test_keys_to_str():
         (list(string.ascii_lowercase), string.ascii_lowercase),
         (list(string.ascii_uppercase), string.ascii_uppercase),
         (list(string.punctuation), string.punctuation),
-        ([
-            'Key.backspace', 'Key.backspace', 'Key.enter', 'Key.enter',
-            'Key.enter', 'Key.space', 'Key.space', 'Key.shift'
-        ], "⌫⌫⏎⏎⏎  ⇧"),
+        (
+            [
+                "Key.backspace",
+                "Key.backspace",
+                "Key.enter",
+                "Key.enter",
+                "Key.enter",
+                "Key.space",
+                "Key.space",
+                "Key.shift",
+            ],
+            "⌫⌫⏎⏎⏎  ⇧",
+        ),
     ]
 
     for _input, expected in test_samples:

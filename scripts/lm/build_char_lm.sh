@@ -2,7 +2,7 @@
 
 # Script to build a character-level n-gram language model using kenlm
 # from WikiText-103 raw corpus.
-# 
+#
 # Vocabulary is limited to lower-case alphabets only, and the
 # generated n-grams do not span word boundaries.
 #
