@@ -119,7 +119,7 @@ class TDSConvCTCModule(pl.LightningModule):
     def __init__(
         self,
         in_features: int,
-        mlp_features: int,
+        mlp_features: Sequence[int],
         block_channels: Sequence[int],
         kernel_width: int,
         optimizer: DictConfig,
