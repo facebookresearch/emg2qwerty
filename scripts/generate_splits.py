@@ -110,10 +110,13 @@ def split_dataset(
 
 
 def dump_split(
-    train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame, path: Path
+    user: str, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame
 ) -> None:
+    config_dir = Path(__file__).parents[1].joinpath("config")
+    path = config_dir.joinpath(f"user/{user}.yaml")
+
     log.info(
-        f"Config: {path}, train: {len(train)} sessions, "
+        f"User: {user}, config: {path}, train: {len(train)} sessions, "
         f"val: {len(val)} sessions, test: {len(test)} sessions"
     )
 
@@ -124,7 +127,9 @@ def dump_split(
     split = {"train": train, "val": val, "test": test}
     with open(path, "w") as f:
         f.write("# @package _global_\n")
-        yaml.safe_dump({"dataset": _format_split(split)}, f, sort_keys=False)
+        yaml.safe_dump(
+            {"user": user, "dataset": _format_split(split)}, f, sort_keys=False
+        )
 
 
 @click.command()
@@ -205,23 +210,21 @@ def main(
         seed=seed,
     )
 
-    config_dir = Path(__file__).parents[1].joinpath("config")
-
     # Dump split for generic benchmark
     dump_split(
-        generic_train,
-        generic_val,
-        personalized_test,
-        path=config_dir.joinpath("user/generic.yaml"),
+        user="generic",
+        train=generic_train,
+        val=generic_val,
+        test=personalized_test,
     )
 
     # Dump `n_test_users` splits for per-user personalization benchmarks
     for i, user in enumerate(test_users):
         dump_split(
-            personalized_train[personalized_train["user"] == user],
-            personalized_val[personalized_val["user"] == user],
-            personalized_test[personalized_test["user"] == user],
-            path=config_dir.joinpath(f"user/user{i}.yaml"),
+            user=f"user{i}",
+            train=personalized_train[personalized_train["user"] == user],
+            val=personalized_val[personalized_val["user"] == user],
+            test=personalized_test[personalized_test["user"] == user],
         )
 
 

@@ -1,4 +1,5 @@
 # @package _global_
+user: generic
 dataset:
   train:
   - user: '71409769'

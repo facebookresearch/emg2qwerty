@@ -1,4 +1,5 @@
 # @package _global_
+user: user6
 dataset:
   train:
   - user: a461646d-c600-4282-a35e-5c5775ce0b5a
