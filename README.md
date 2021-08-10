@@ -6,6 +6,7 @@ Code accompanying `emg2qwerty` dataset along with baselines.
 
 ```shell
 conda env create -f environment.yml
+ln -s /private/home/viswanath/oss/emg2qwerty-data-full-2021-07-30 data
 ```
 
 ### Training on FAIR Cluster
