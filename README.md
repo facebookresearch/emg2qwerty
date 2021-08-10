@@ -53,3 +53,8 @@ python -m emg2qwerty.train \
   hydra.launcher.mem_gb=64 \
   +cluster=slurm -m
 ```
+
+The above uses a 6-gram character-level language model trained using kenlm on WikiText-103 raw corpus. To re-build the language model,
+1. Build kenlm from source: https://github.com/kpu/kenlm#compiling
+2. Download nltk punkt tokenizer: `python -c "import nltk; nltk.download('punkt')"`
+3. Run `./scripts/lm/build_char_lm.sh <ngram_order>`
