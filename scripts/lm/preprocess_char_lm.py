@@ -1,3 +1,9 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
 # Script to preprocess a raw text corpus before feeding to kenlm for
 # building a character-level n-gram language model using lmplz.
 #
