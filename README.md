@@ -5,7 +5,12 @@ Code accompanying `emg2qwerty` dataset along with baselines.
 ### Setup
 
 ```shell
+# Make sure you have [git-lfs installed](https://git-lfs.github.com/) (for pre-trained models)
+git lfs install
+
+git clone git@github.com:fairinternal/emg2qwerty.git && cd emg2qwerty/
 conda env create -f environment.yml
+
 ln -s /private/home/viswanath/oss/emg2qwerty-data-full-2021-07-30 data
 ```
 
