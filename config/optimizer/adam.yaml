@@ -1,0 +1,4 @@
+# @package _global_
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 1e-3
