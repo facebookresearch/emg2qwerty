@@ -24,7 +24,6 @@ import h5py
 import numpy as np
 import torch
 from torch import nn
-from torch.nn import functional as F
 
 from emg2qwerty import transforms
 from emg2qwerty.charset import CharacterSet, charset
@@ -44,7 +43,7 @@ class Emg2QwertySessionData:
     ``self.timeseries`` is a `h5py.Dataset` instance with a compound data type
     as in a numpy structured array containing three fields - EMG data from the
     left and right wrists, and their corresponding timestamps.
-    The sampling rate of EMG is 2000 Hz, each EMG device has 16 electrode
+    The sampling rate of EMG is 2kHz, each EMG device has 16 electrode
     channels, and the signal has been high-pass filtered. Therefore, the fields
     corresponding to left and right EMG are 2D arrays of shape ``(T, 16)`` each
     and ``timestamps`` is a 1D array of length ``T``.
@@ -434,13 +433,6 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
         # Extract EMG tensor corresponding to the window
         emg = self.transform(window)
         assert torch.is_tensor(emg)
-
-        # Compensate with zero padding when contextual padding cannot be
-        # fully satisfied at the extremities for emg of shape (T, ...)
-        zero_pad_left = max(0, self.left_padding - offset)
-        zero_pad_right = max(0, window_end - len(self.session))
-        pad = [0] * 2 * (emg.ndim - 1) + [zero_pad_left, zero_pad_right]
-        emg = F.pad(emg, pad)
 
         # Extract labels corresponding to the original (un-padded) window
         timestamps = window[Emg2QwertySessionData.TIMESTAMPS]

@@ -41,7 +41,7 @@ hydra:
     dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
     dir: ${hydra.run.dir}
-    subdir: ${hydra.job.num}_${hydra.job.override_dirname}
+    subdir: ${hydra.job.num}_${hydra.job.override_dirname}/seed=${seed}
   output_subdir: hydra_configs
   job:
     name: emg2qwerty
@@ -50,3 +50,4 @@ hydra:
         exclude_keys:
           - cluster
           - checkpoint
+          - seed

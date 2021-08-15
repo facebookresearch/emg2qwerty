@@ -2,7 +2,7 @@
 logspec:
   _target_: emg2qwerty.transforms.LogSpectrogram
   n_fft: 64
-  hop_length: 16  # Downsamples from 2000Hz to 125Hz
+  hop_length: 16  # Downsamples from 2kHz to 125Hz
 
 specaug:
   _target_: emg2qwerty.transforms.SpecAugment
@@ -18,7 +18,7 @@ transforms:
     - _target_: emg2qwerty.transforms.RandomBandRotation
       offsets: [-1, 0, 1]
     - _target_: emg2qwerty.transforms.TemporalAlignmentJitter
-      max_offset: 3
+      max_offset: 120  # Max 60ms jitter for 2kHz EMG
     - ${logspec}
     - ${specaug}
 

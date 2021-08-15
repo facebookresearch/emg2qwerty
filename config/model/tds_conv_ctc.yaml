@@ -8,5 +8,5 @@ module:
 
 datamodule:
   _target_: emg2qwerty.train.WindowedEmgDataModule
-  window_length: 8000  # 4 sec windows at 2000Hz
+  window_length: 8000  # 4 sec windows for 2kHz EMG
   padding: [1800, 200]  # 900ms past context, 100ms future context
