@@ -155,7 +155,17 @@ class TemporalAlignmentJitter:
 
 @dataclass
 class LogSpectrogram:
-    """TODO: docstring"""
+    """Creates log10-scaled spectrogram from an EMG signal. In the case of
+    multi-channeled signal, the channels are treated independently.
+    The input must be of shape (T, ...) and the returned spectrogram
+    is of shape (T, ..., freq).
+
+    Args:
+        n_fft (int): Size of FFT, creates n_fft // 2 + 1 frequency bins.
+            (default: 64)
+        hop_length (int): Number of samples to stride between consecutive
+            STFT windows. (default: 16)
+    """
 
     n_fft: int = 64
     hop_length: int = 16
@@ -172,15 +182,33 @@ class LogSpectrogram:
         )
 
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
-        x = tensor.transpose(0, -1)  # (T, ..., C) -> (C, ..., T)
-        spec = self.spectrogram(x)  # (C, ..., freq, T)
+        x = tensor.movedim(0, -1)  # (T, ..., C) -> (..., C, T)
+        spec = self.spectrogram(x)  # (..., C, freq, T)
         logspec = torch.log10(spec + 1e-6)
-        return logspec.transpose(0, -1)  # (T, ..., freq, C)
+        return logspec.movedim(-1, 0)  # (T, ..., C, freq)
 
 
 @dataclass
 class SpecAugment:
-    """TODO: docstring"""
+    """Applies time and frequency masking as per the paper
+    "SpecAugment: A Simple Data Augmentation Method for Automatic Speech
+    Recognition, Park et al" (https://arxiv.org/abs/1904.08779).
+
+    Args:
+        n_time_masks (int): Maximum number of time masks to apply,
+            uniformly sampled from 0. (default: 0)
+        time_mask_param (int): Maximum length of each time mask,
+            uniformly sampled from 0. (default: 0)
+        iid_time_masks (int): Whether to apply different time masks to
+            each band/channel (default: True)
+        n_freq_masks (int): Maximum number of frequency masks to apply,
+            uniformly sampled from 0. (default: 0)
+        freq_mask_param (int): Maximum length of each frequency mask,
+            uniformly sampled from 0. (default: 0)
+        iid_freq_masks (int): Whether to apply different frequency masks to
+            each band/channel (default: True)
+        mask_value (float): Value to assign to the masked columns (default: 0.)
+    """
 
     n_time_masks: int = 0
     time_mask_param: int = 0
@@ -191,7 +219,6 @@ class SpecAugment:
     mask_value: float = 0.0
 
     def __post_init__(self) -> None:
-        # TODO: mean mask value, iid
         self.time_mask = torchaudio.transforms.TimeMasking(
             self.time_mask_param, iid_masks=self.iid_time_masks
         )
@@ -200,8 +227,8 @@ class SpecAugment:
         )
 
     def __call__(self, specgram: torch.Tensor) -> torch.Tensor:
-        # (T, ..., freq, C) -> (C, ..., freq, T)
-        x = specgram.transpose(0, -1)
+        # (T, ..., C, freq) -> (..., C, freq, T)
+        x = specgram.movedim(0, -1)
 
         # Time masks
         n_t_masks = np.random.randint(self.n_time_masks + 1)
@@ -213,5 +240,5 @@ class SpecAugment:
         for _ in range(n_f_masks):
             x = self.freq_mask(x, mask_value=self.mask_value)
 
-        # (C, ..., freq, T) -> (T, ..., freq, C)
-        return x.transpose(0, -1)
+        # ( ..., C, freq, T) -> (T, ..., C, freq)
+        return x.movedim(-1, 0)

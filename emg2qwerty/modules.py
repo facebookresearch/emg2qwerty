@@ -11,35 +11,55 @@ from torch import nn
 
 
 class SpectrogramNorm(nn.Module):
-    """TODO: docstring - channels -> total electrode channels"""
+    """A `torch.nn.Module` that applies 2D batch normalization over spectrogram
+    per electrode channel per band. Inputs must be of shape
+    (T, N, num_bands, electrode_channels, frequency_bins).
+
+    With left and right bands and 16 electrode channels per band, spectrograms
+    corresponding to each of the 2 * 16 = 32 channels are normalized
+    independently using `nn.BatchNorm2d` such that stats are computed
+    over (N, freq, time) slices.
+
+    Args:
+        channels (int): Total number of electrode channels across bands
+            such that the normalization statistics are calculated per channel..
+            Should be equal to num_bands * electrode_chanels.
+    """
 
     def __init__(self, channels: int) -> None:
         super().__init__()
-
         self.batch_norm = nn.BatchNorm2d(channels)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        # (T, N, bands=2, frequency_bins, electrode_channels=16)
-        T, N, bands, freq, C = inputs.shape
+        T, N, bands, C, freq = inputs.shape  # (T, N, bands=2, C=16, freq)
+        x = inputs.movedim(0, -1)  # (N, bands=2, C=16, freq, T)
 
-        # (T, N, bands=2, freq, C=16) -> (N, C=16, bands=2, freq, T)
-        x = inputs.transpose(0, 1).transpose(1, -1)
-
-        # Normalize spectrogram per electrode channel per band. With left
-        # and right bands and 16 electrode channels per band, spectrograms
-        # corresponding to each of the 2 * 16 = 32 channels are normalized
-        # independently using `nn.BatchNorm2d` such that stats are computed
-        # over (N, freq, time) slices.
-        x = x.reshape(N, C * bands, freq, T)
+        x = x.reshape(N, bands * C, freq, T)
         x = self.batch_norm(x)
-        x = x.reshape(N, C, bands, freq, T)
+        x = x.reshape(N, bands, C, freq, T)
 
-        # (N, C=16, bands=2, freq, T) -> (T, N, bands=2, freq, C=16)
-        return x.transpose(1, -1).transpose(0, 1)
+        return x.movedim(-1, 0)  # (T, N, bands=2, C=16, freq)
 
 
 class RotationInvariantMLP(nn.Module):
-    """TODO: docstring"""
+    """A `torch.nn.Module` that takes an input tensor of shape
+    (T, N, electrode_channels, ...) corresponding to a single band, applies
+    an MLP after shifting/rotating the electrodes for each positional offset
+    in ``offsets``, and pools over all the outputs.
+
+    Returns a tensor of shape (T, N, mlp_features[-1]).
+
+    Args:
+        in_features (int): Number of input features to the MLP. For an input of
+            shape (T, N, C, ...), this should be equal to C * ... (that is,
+            the flattened size from the channel dim onwards).
+        mlp_features (list): List of integers denoting the number of
+            out_features per layer in the MLP.
+        pooling (str): Whether to apply mean or max pooling over the outputs
+            of the MLP corresponding to each offset. (default: "mean")
+        offsets (list): List of positional offsets to shift/rotate the
+            electrode channels by. (default: ``(-1, 0, 1)``).
+    """
 
     def __init__(
         self,
@@ -68,16 +88,16 @@ class RotationInvariantMLP(nn.Module):
         self.offsets = offsets if len(offsets) > 0 else (0,)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = inputs  # (T, N, ...)
+        x = inputs  # (T, N, C, ...)
 
         # Create a new dim for band rotation augmentation with each entry
         # corresponding to the original tensor with its electrode channels
         # shifted by one of ``offsets``:
-        # (T, N, ...) -> (T, N, rotation, ...)
+        # (T, N, C, ...) -> (T, N, rotation, C, ...)
         x = torch.stack([x.roll(offset, dims=2) for offset in self.offsets], dim=2)
 
         # Flatten features and pass through MLP:
-        # (T, N, rotation, ...) -> (T, N, rotation, mlp_features[-1])
+        # (T, N, rotation, C, ...) -> (T, N, rotation, mlp_features[-1])
         x = self.mlp(x.flatten(start_dim=3))
 
         # Pool over rotations:
@@ -86,19 +106,38 @@ class RotationInvariantMLP(nn.Module):
 
 
 class MultiBandRotationInvariantMLP(nn.Module):
-    """TODO docstring: (T, N, band, ...)"""
+    """A `torch.nn.Module` that applies a separate instance of
+    `RotationInvariantMLP` per band for inputs of shape
+    (T, N, num_bands, electrode_channels, ...).
+
+    Returns a tensor of shape (T, N, num_bands, mlp_features[-1]).
+
+    Args:
+        in_features (int): Number of input features to the MLP. For an input
+            of shape (T, N, num_bands, C, ...), this should be equal to
+            C * ... (that is, the flattened size from the channel dim onwards).
+        mlp_features (list): List of integers denoting the number of
+            out_features per layer in the MLP.
+        pooling (str): Whether to apply mean or max pooling over the outputs
+            of the MLP corresponding to each offset. (default: "mean")
+        offsets (list): List of positional offsets to shift/rotate the
+            electrode channels by. (default: ``(-1, 0, 1)``).
+        num_bands (int): ``num_bands`` for an input of shape
+            (T, N, num_bands, C, ...). (default: 2)
+        stack_dim (int): The dimension along which the left and right data
+            are stacked. (default: 2)
+    """
 
     def __init__(
         self,
-        num_bands: int,
         in_features: int,
         mlp_features: Sequence[int],
         pooling: str = "mean",
         offsets: Sequence[int] = (-1, 0, 1),
+        num_bands: int = 2,
         stack_dim: int = 2,
     ) -> None:
         super().__init__()
-
         self.num_bands = num_bands
         self.stack_dim = stack_dim
 
@@ -122,7 +161,18 @@ class MultiBandRotationInvariantMLP(nn.Module):
 
 
 class TDSConv2dBlock(nn.Module):
-    """TODO: docstring"""
+    """A 2D temporal convolution block as per "Sequence-to-Sequence Speech
+    Recognition with Time-Depth Separable Convolutions, Hannun et al"
+    (https://arxiv.org/abs/1904.02619).
+
+    Args:
+        channels (int): Number of input and output channels. For an input of
+            shape (T, N, num_features), the invariant we want is
+            channels * width = num_features.
+        width (int): Input width. For an input of shape (T, N, num_features),
+            the invariant we want is channels * width = num_features.
+        kernel_width (int): The kernel size of the temporal convolution.
+    """
 
     def __init__(self, channels: int, width: int, kernel_width: int) -> None:
         super().__init__()
@@ -154,7 +204,14 @@ class TDSConv2dBlock(nn.Module):
 
 
 class TDSFullyConnectedBlock(nn.Module):
-    """TODO: docstring"""
+    """A fully connected block as per "Sequence-to-Sequence Speech
+    Recognition with Time-Depth Separable Convolutions, Hannun et al"
+    (https://arxiv.org/abs/1904.02619).
+
+    Args:
+        num_features (int): ``num_features`` for an input of shape
+            (T, N, num_features).
+    """
 
     def __init__(self, num_features: int) -> None:
         super().__init__()
@@ -174,7 +231,18 @@ class TDSFullyConnectedBlock(nn.Module):
 
 
 class TDSConvEncoder(nn.Module):
-    """TODO: docstring"""
+    """A time depth-separable convolutional encoder composing a sequence
+    of `TDSConv2dBlock` and `TDSFullyConnectedBlock` as per
+    "Sequence-to-Sequence Speech Recognition with Time-Depth Separable
+    Convolutions, Hannun et al" (https://arxiv.org/abs/1904.02619).
+
+    Args:
+        num_features (int): ``num_features`` for an input of shape
+            (T, N, num_features).
+        block_channels (list): A list of integers indicating the number
+            of channels per `TDSConv2dBlock`.
+        kernel_width (int): The kernel size of the temporal convolutions.
+    """
 
     def __init__(
         self,

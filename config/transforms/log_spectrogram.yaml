@@ -1,4 +1,18 @@
 # @package _global_
+to_tensor:
+  _target_: emg2qwerty.transforms.ToTensor
+  fields: [emg_left, emg_right]
+
+band_rotation:
+  _target_: emg2qwerty.transforms.ForEach  # i.i.d rotation offset for each band
+  transform:
+    _target_: emg2qwerty.transforms.RandomBandRotation
+    offsets: [-1, 0, 1]
+
+temporal_jitter:
+  _target_: emg2qwerty.transforms.TemporalAlignmentJitter
+  max_offset: 120  # Max 60ms jitter for 2kHz EMG
+
 logspec:
   _target_: emg2qwerty.transforms.LogSpectrogram
   n_fft: 64
@@ -13,18 +27,14 @@ specaug:
 
 transforms:
   train:
-    - _target_: emg2qwerty.transforms.ToTensor
-      fields: [emg_left, emg_right]
-    - _target_: emg2qwerty.transforms.RandomBandRotation
-      offsets: [-1, 0, 1]
-    - _target_: emg2qwerty.transforms.TemporalAlignmentJitter
-      max_offset: 120  # Max 60ms jitter for 2kHz EMG
+    - ${to_tensor}
+    - ${band_rotation}
+    - ${temporal_jitter}
     - ${logspec}
     - ${specaug}
 
   val:
-    - _target_: emg2qwerty.transforms.ToTensor
-      fields: [emg_left, emg_right]
+    - ${to_tensor}
     - ${logspec}
 
   test: ${transforms.val}

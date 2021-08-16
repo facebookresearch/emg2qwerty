@@ -65,6 +65,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
                     transform=self._train_transforms,
                     window_length=self.window_length,
                     padding=self.padding,
+                    jitter=True,
                 )
                 for hdf5_path in self.train_sessions
             ]
@@ -76,13 +77,22 @@ class WindowedEmgDataModule(pl.LightningDataModule):
                     transform=self._val_transforms,
                     window_length=self.window_length,
                     padding=self.padding,
+                    jitter=False,
                 )
                 for hdf5_path in self.val_sessions
             ]
         )
         self.test_dataset = ConcatDataset(
             [
-                WindowedEmgDataset(hdf5_path, transform=self._test_transforms)
+                WindowedEmgDataset(
+                    hdf5_path,
+                    transform=self._test_transforms,
+                    # Feed the entire session at once without windowing/padding
+                    # at test time for more realism
+                    window_length=None,
+                    padding=(0, 0),
+                    jitter=False,
+                )
                 for hdf5_path in self.test_sessions
             ]
         )
@@ -108,9 +118,10 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
-        # At test time, feed entire sessions at once without windowing/padding
-        # for more realism. Limit batch size to 1 to fit within GPU memory and
-        # avoid any influence of padding in test scores.
+        # Test dataset does not involve windowing and entire sessions are
+        # fed at once. Limit batch size to 1 to fit within GPU memory and
+        # avoid any influence of padding (while collating multiple batch items)
+        # in test scores.
         return DataLoader(
             self.test_dataset,
             batch_size=1,
@@ -137,16 +148,15 @@ class TDSConvCTCModule(pl.LightningModule):
 
         # Constants for readability
         num_bands = 2
-        in_channels = 16  # Electrode channels
-        num_features = mlp_features[-1] * num_bands
+        electrode_channels = 16
+        num_features = num_bands * mlp_features[-1]
 
         # Model
-        self.spec_norm = SpectrogramNorm(channels=in_channels * num_bands)
+        self.spec_norm = SpectrogramNorm(channels=num_bands * electrode_channels)
         self.rotation_invariant_mlp = MultiBandRotationInvariantMLP(
-            num_bands=num_bands,
             in_features=in_features,
             mlp_features=mlp_features,
-            pooling="mean",
+            num_bands=num_bands,
         )
         self.conv_encoder = TDSConvEncoder(
             num_features=num_features,
@@ -166,8 +176,8 @@ class TDSConvCTCModule(pl.LightningModule):
         self.decoder = instantiate(decoder)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = inputs  # (T, N, bands=2, freq, electrode_channels=16)
-        x = self.spec_norm(x)  # (T, N, bands=2, freq, C=16)
+        x = inputs  # (T, N, bands=2, electrode_channels=16, freq)
+        x = self.spec_norm(x)  # (T, N, bands=2, C=16, freq)
         x = self.rotation_invariant_mlp(x)  # (T, N, bands=2, mlp_features[-1])
         x = x.flatten(start_dim=2)  # (T, N, num_features)
         x = self.conv_encoder(x)  # (T, N, num_features)

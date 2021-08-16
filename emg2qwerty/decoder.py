@@ -175,7 +175,7 @@ class BeamState:
     Args:
         label_node (TrieNode): Reference to the label trie node for this state.
         lm_node (TrieNode): Reference to the LM trie node for this state.
-            (default: None)
+            (default: ``None``)
         p_b (float): Probability (in log-space) of ending in blank.
             We maintain separate probabilities for a decoding ending in blank
             and non-blank to be able to differentiate between repeated tokens
@@ -185,7 +185,7 @@ class BeamState:
             (default: ``-np.inf``)
         hash_ (hashlib._Hash): `hashlib._Hash` object corresponding to this
             state's decoding for efficiently keying the decoded prefix into
-            a dict. (default: None)
+            a dict. (default: ``None``)
     """
 
     label_node: TrieNode
@@ -343,7 +343,7 @@ class CTCBeamDecoder(Decoder):
             scoring labels are considered for the beam update. Otherwise, all
             output labels are considered. (default: -1)
         lm_path (str): Path to optional KenLM n-gram language model file
-            in ARPA or binary format. (default: None)
+            in ARPA or binary format. (default: ``None``)
         lm_weight (float): Weight of the language model scores relative to the
             emission probabilities. (default: 1.2)
         insertion_bonus (float): Character insertion bonus to prevent favoring

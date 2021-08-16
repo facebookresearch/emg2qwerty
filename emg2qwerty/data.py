@@ -377,13 +377,33 @@ class LabelData:
 
 @dataclass
 class WindowedEmgDataset(torch.utils.data.Dataset):
-    """TODO: docstring"""
+    """A `torch.utils.data.Dataset` corresponding to an instance of
+    `Emg2QwertySessionData` that iterates over EMG windows of configurable
+    length and stride.
+
+    Args:
+        hdf5_path (str): Path to the session file in hdf5 format.
+        window_length (int): Size of each window. Specify None for no windowing
+            in which case this will be a dataset of length 1 containing the
+            entire session. (default: ``None``)
+        stride (int): Stride between consecutive windows. Specify None to set
+            this to window_length, in which case there will be no overlap
+            between consecutive windows. (default: ``window_length``)
+        padding (Tuple[int, int]): Left and right contextual padding for
+            windows in terms of number of raw EMG samples.
+        jitter (bool): If True, randomly jitter the offset of each window.
+            Use this for training time variability. (default: ``False``)
+        transform (Callable): A composed sequence of transforms that takes
+            a window/slice of `Emg2QwertySessionData` in the form of a numpy
+            structured array and returns a `torch.Tensor` instance.
+            (default: ``emg2qwerty.transforms.ToTensor()``)
+    """
 
     hdf5_path: Path
     window_length: InitVar[Optional[int]] = None
     stride: InitVar[Optional[int]] = None
     padding: InitVar[Tuple[int, int]] = (0, 0)
-    jitter: bool = True
+    jitter: bool = False
     transform: Transform[np.ndarray, torch.Tensor] = transforms.ToTensor()
 
     def __post_init__(
