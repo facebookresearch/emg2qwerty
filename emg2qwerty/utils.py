@@ -4,7 +4,8 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Iterator
+from pathlib import Path
+from typing import Iterator, Optional
 
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -23,6 +24,13 @@ def instantiate_optimizer_and_scheduler(
         "optimizer": optimizer,
         "lr_scheduler": OmegaConf.to_container(lr_scheduler),
     }
+
+
+def get_last_checkpoint(checkpoint_dir: Path) -> Optional[Path]:
+    checkpoints = list(checkpoint_dir.glob("*.ckpt"))
+    if not checkpoints:
+        return None
+    return sorted(checkpoints, key=lambda p: p.stat().st_mtime)[-1]
 
 
 def cpus_per_task(gpus_per_node: int, tasks_per_node: int, num_workers: int) -> int:

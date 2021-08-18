@@ -22,6 +22,7 @@ trainer:
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: checkpoints
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     save_last: True
