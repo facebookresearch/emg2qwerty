@@ -11,7 +11,7 @@ git lfs install
 git clone git@github.com:fairinternal/emg2qwerty.git && cd emg2qwerty/
 conda env create -f environment.yml
 
-ln -s /private/home/viswanath/oss/emg2qwerty-data-full-2021-07-30 data
+ln -s /private/home/viswanath/oss/emg2qwerty-data-2021-08 data
 ```
 
 ### Training on FAIR Cluster

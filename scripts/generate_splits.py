@@ -184,7 +184,7 @@ def main(
     n_test_sessions_per_user: int,
     seed: int,
 ):
-    df = pd.read_csv(Path(dataset_root).joinpath("summary.csv"))
+    df = pd.read_csv(Path(dataset_root).joinpath("metadata.csv"))
     df.quality_check_tags = df.quality_check_tags.apply(yaml.safe_load)
 
     # Sample users to be held-out for personalization and split the dataset
