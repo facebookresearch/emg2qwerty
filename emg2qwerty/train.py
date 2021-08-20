@@ -294,6 +294,15 @@ def main(config: DictConfig):
         decoder=config.decoder,
         _recursive_=False,
     )
+    if config.checkpoint is not None:
+        log.info(f"Loading from checkpoint {config.checkpoint}")
+        module = module.load_from_checkpoint(
+            config.checkpoint,
+            optimizer=config.optimizer,
+            lr_scheduler=config.lr_scheduler,
+            decoder=config.decoder,
+        )
+
     # Instantiate LightningDataModule
     log.info(f"Instantiating LightningDataModule {config.datamodule}")
     datamodule = instantiate(
@@ -318,32 +327,19 @@ def main(config: DictConfig):
     callbacks = [instantiate(cfg) for cfg in callback_configs]
 
     # Initialize trainer
-    if config.checkpoint is not None:
-        resume_from_checkpoint = config.checkpoint
-    else:
-        checkpoint_dir = Path.cwd().joinpath("checkpoints")
-        resume_from_checkpoint = utils.get_last_checkpoint(checkpoint_dir)
+    checkpoint_dir = Path.cwd().joinpath("checkpoints")
+    resume_from_checkpoint = utils.get_last_checkpoint(checkpoint_dir)
     trainer = pl.Trainer(
         **config.trainer,
         callbacks=callbacks,
         resume_from_checkpoint=resume_from_checkpoint,
     )
 
+    # Train
     if config.train:
         trainer.fit(module, datamodule)
-    else:
-        assert (
-            config.checkpoint is not None
-        ), "checkpoint must be provided with train=False"
-        log.info(f"Loading from checkpoint {config.checkpoint}")
-        module = module.load_from_checkpoint(
-            config.checkpoint,
-            optimizer=config.optimizer,
-            lr_scheduler=config.lr_scheduler,
-            decoder=config.decoder,
-        )
 
-    # Validate and test on best model or the provided checkpoint
+    # Validate and test on the trained model or the provided checkpoint
     val_metrics = trainer.validate(module, datamodule)
     test_metrics = trainer.test(module, datamodule)
 
