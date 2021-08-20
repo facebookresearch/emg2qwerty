@@ -1,0 +1,54 @@
+defaults:
+  - user: generic
+  - transforms: log_spectrogram
+  - model: tds_conv_ctc
+  - optimizer: adam
+  - lr_scheduler: linear_warmup_cosine_annealing
+  - decoder: ctc_greedy
+
+seed: 1501
+batch_size: 32
+num_workers: 4  # Number of workers for dataloading
+train: True  # Whether to train or only run validation and test
+checkpoint: null  # Optional path to checkpoint file
+monitor_metric: val_CER
+monitor_mode: min
+
+trainer:
+  max_epochs: 150
+  num_nodes: 1
+  gpus: 1
+
+callbacks:
+  - _target_: pytorch_lightning.callbacks.LearningRateMonitor
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: checkpoints
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
+    save_last: True
+    verbose: True
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
+    patience: 20
+    check_on_train_epoch_end: False
+    verbose: True
+
+dataset:
+  root: ${hydra:runtime.cwd}/data
+
+hydra:
+  run:
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${hydra.run.dir}
+    subdir: ${hydra.job.num}_${hydra.job.override_dirname}/seed=${seed}
+  output_subdir: hydra_configs
+  job:
+    name: emg2qwerty
+    config:
+      override_dirname:
+        exclude_keys:
+          - cluster
+          - checkpoint
+          - seed

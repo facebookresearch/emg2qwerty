@@ -1,0 +1,30 @@
+# @package _global_
+user: user7
+dataset:
+  train:
+  - user: 14989984
+    session: 2021-03-22-1616442805-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-22-1616440824-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-22-1616441800-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-20-1616268775-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-20-1616266960-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-20-1616213002-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-19-1616211954-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-21-1616382958-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  val:
+  - user: 14989984
+    session: 2021-03-20-1616213888-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-18-1616099846-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  test:
+  - user: 14989984
+    session: 2021-03-18-1616101267-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+  - user: 14989984
+    session: 2021-03-21-1616382076-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
