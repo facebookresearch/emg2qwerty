@@ -142,7 +142,7 @@ def dump_split(
 @click.option(
     "--dataset-root",
     type=str,
-    required=True,
+    default=Path(__file__).parents[1].joinpath("data"),
     help="Dataset root directory",
 )
 @click.option(

@@ -43,8 +43,9 @@ dmypy.json
 logs/
 lightning_logs/
 
-# Symlinks
+# Data
 data
+*.tar.gz
 
 # LM
 wikitext-103-raw*
