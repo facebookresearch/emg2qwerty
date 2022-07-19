@@ -8,6 +8,8 @@ A dataset of Surface electromyography (sEMG) recordings while typing on a QWERTY
 
 ### Setup
 
+**Update:** As of July 2022, the URL below does not work. Follow the instructions in https://www.internalfb.com/intern/wiki/RL/RL-CTRL/FRL-CTRL_Engineering_Overview/RIS/CTRL-FAIR_Collaboration_Guide/ to access this dataset on the FAIR cluster.
+
 ```shell
 # Download the dataset
 wget https://fb-ctrl-oss.s3.amazonaws.com/emg2qwerty/emg2qwerty-data-2021-08.tar.gz
