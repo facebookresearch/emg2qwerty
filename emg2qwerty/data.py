@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-from dataclasses import InitVar, dataclass
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import (
     Any,
@@ -404,7 +404,9 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     stride: InitVar[Optional[int]] = None
     padding: InitVar[Tuple[int, int]] = (0, 0)
     jitter: bool = False
-    transform: Transform[np.ndarray, torch.Tensor] = transforms.ToTensor()
+    transform: Transform[np.ndarray, torch.Tensor] = field(
+        default_factory=lambda: transforms.ToTensor()
+    )
 
     def __post_init__(
         self,
