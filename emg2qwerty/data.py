@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
-from dataclasses import InitVar, dataclass
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import (
     Any,
@@ -207,12 +207,12 @@ class LabelData:
     _charset: ClassVar[CharacterSet] = charset()
 
     label_str: str
-    timestamps: InitVar[Optional[Sequence[float]]] = None
+    _timestamps: InitVar[Optional[Sequence[float]]] = None
 
-    def __post_init__(self, timestamps: Optional[Sequence[float]]) -> None:
+    def __post_init__(self, _timestamps: Optional[Sequence[float]]) -> None:
         self.timestamps: Optional[np.ndarray] = None
-        if timestamps is not None:
-            self.timestamps = np.array(timestamps)
+        if _timestamps is not None:
+            self.timestamps = np.array(_timestamps)
             assert self.timestamps.ndim == 1
             assert len(self.timestamps) == len(self.label_str)
             assert (np.diff(self.timestamps) >= 0).all(), "Not monotonic"
@@ -238,7 +238,7 @@ class LabelData:
             end_t (float): The end timestamp of the window in absolute
                 unix time. (default: ``np.inf``)
         """
-        label_data = cls(label_str="", timestamps=[])
+        label_data = cls(label_str="", _timestamps=[])
         for keystroke in keystrokes:
             if keystroke["start"] > end_t:
                 break
@@ -269,7 +269,7 @@ class LabelData:
 
         key = cls._charset._normalize_keys([key])[0]
         if key not in cls._charset:  # Out of vocabulary
-            return cls(label_str="", timestamps=[])
+            return cls(label_str="", _timestamps=[])
 
         label_str = cls._charset.keys_to_str([key])
         timestamps = [timestamp] if timestamp is not None else None
@@ -404,7 +404,9 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     stride: InitVar[Optional[int]] = None
     padding: InitVar[Tuple[int, int]] = (0, 0)
     jitter: bool = False
-    transform: Transform[np.ndarray, torch.Tensor] = transforms.ToTensor()
+    transform: Transform[np.ndarray, torch.Tensor] = field(
+        default_factory=lambda: transforms.ToTensor()
+    )
 
     def __post_init__(
         self,

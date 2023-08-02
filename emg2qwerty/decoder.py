@@ -183,7 +183,7 @@ class BeamState:
             collapsed together (default: ``-np.inf``)
         p_nb (float): Probability (in log-space) of ending in non-blank.
             (default: ``-np.inf``)
-        hash_ (hashlib._Hash): `hashlib._Hash` object corresponding to this
+        _hash (hashlib._Hash): `hashlib._Hash` object corresponding to this
             state's decoding for efficiently keying the decoded prefix into
             a dict. (default: ``None``)
     """
@@ -192,16 +192,16 @@ class BeamState:
     lm_node: Optional[TrieNode] = None
     p_b: float = -np.inf
     p_nb: float = -np.inf
-    hash_: InitVar[Optional[hashlib._Hash]] = None
+    _hash: InitVar[Optional[hashlib._Hash]] = None
 
-    def __post_init__(self, hash_: Optional[hashlib._Hash]) -> None:
+    def __post_init__(self, _hash: Optional[hashlib._Hash]) -> None:
         # Hash object for efficiently keying the decoded prefix into a dict
         # independent of the length of the decoding / number of timesteps.
-        if hash_ is None:
+        if _hash is None:
             self.hash_ = hashlib.sha256()
             self.hash_.update(bytes(self.decoding))
         else:
-            self.hash_ = hash_
+            self.hash_ = _hash
 
     @classmethod
     def init(cls, blank_label: int, lm: Optional[kenlm.Model] = None) -> "BeamState":
@@ -293,9 +293,9 @@ class BeamState:
         if next_label is None:
             return self.hash_
 
-        hash_ = self.hash_.copy()
-        hash_.update(bytes([next_label]))
-        return hash_
+        _hash = self.hash_.copy()
+        _hash.update(bytes([next_label]))
+        return _hash
 
     def __str__(self) -> str:
         o = (
@@ -498,8 +498,8 @@ class CTCBeamDecoder(Decoder):
         delete key. If it is a delete label, we backtrack up the LM trie by a
         node and the returned BeamState holds a reference to this LM node."""
         # Get the hash corresponding to extending prev state with `label`
-        hash_ = prev_state.hash(label)
-        key = hash_.digest()
+        _hash = prev_state.hash(label)
+        key = _hash.digest()
         if cache is not None and key in cache:
             return cache[key]
 
@@ -530,7 +530,7 @@ class CTCBeamDecoder(Decoder):
                 else prev_state.lm_node.parent
             )
 
-        next_state = BeamState(label_node, lm_node, hash_=hash_)
+        next_state = BeamState(label_node, lm_node, _hash=_hash)
         if cache is not None:
             cache[key] = next_state
         return next_state
