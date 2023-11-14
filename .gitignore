@@ -21,6 +21,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*.egg-info
 
 # mypy
 .mypy_cache/
@@ -45,6 +46,7 @@ lightning_logs/
 
 # Data
 data
+bids_data
 *.tar.gz
 
 # LM

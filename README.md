@@ -53,10 +53,7 @@ The following figure visualizes the dataset splits for training, validation and 
 
 Generic user model:
 ```shell
-python -m emg2qwerty.train \
-  user=generic \
-  trainer.gpus=8 \
-  +cluster=local -m
+python -m emg2qwerty.train user=generic trainer.gpus=8 +cluster=local -m
 ```
 
 Personalized user models:
