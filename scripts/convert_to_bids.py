@@ -52,6 +52,7 @@ def get_raw(session_name):
         " ": "Key.space",
     }
     chars_ = [mapping[c] if c in mapping else c for c in chars]
+    chars_ = ["key/" + c for c in chars_]  # prefix with "key" to distinguish with prompts
     annot = mne.Annotations(
         onset=raw.times[idx], duration=np.zeros(len(idx)), description=chars_
     )
@@ -66,7 +67,8 @@ def get_raw(session_name):
     idx_end[idx_end >= len(session["time"])] = len(session["time"]) - 1
     onset = raw.times[idx_start]
     duration = raw.times[idx_end] - raw.times[idx_start]
-    description = prompts.payload.apply(pd.Series).text.str.replace("⏎", "\n").values
+    description = prompts.payload.apply(pd.Series).text.str.replace("⏎", "\\n").values
+    description = ["prompt/" + d for d in description]  # prefix with "prompt" to distinguish with keys
     annot_prompts = mne.Annotations(
         onset=onset, duration=duration, description=description
     )
