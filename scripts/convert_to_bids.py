@@ -3,34 +3,24 @@
 
 from pathlib import Path
 import yaml
+import click
 import numpy as np
 import pandas as pd
 import mne
 import mne_bids
 import tqdm
 
-mne.set_log_level("WARNING")
-
-# %%
-
-dataset_root = Path("./data")
-df = pd.read_csv(dataset_root.joinpath("metadata.csv"))
-df.quality_check_tags = df.quality_check_tags.apply(yaml.safe_load)
-df.head()
-
-# %%
 from emg2qwerty.data import Emg2QwertySessionData
 
+mne.set_log_level("WARNING")
 
-def get_raw(session_name):
-    fname = dataset_root / (session_name + ".hdf5")
+
+def get_raw(session_name: str, dataset_root: str) -> mne.io.Raw:
+    """Read data in HDF5 and get an MNE Raw object with keystrokes and prompts
+    saved as mne.Annotations."""
+    fname = Path(dataset_root) / (session_name + ".hdf5")
     session = Emg2QwertySessionData(fname)
-    # 1 / np.median(np.diff(session["time"]))
-
     label_data = session.ground_truth()
-    # label_data.labels
-    # label_data.label_str
-    # label_data.timestamps.shape
 
     ch_names = [f"emg{i}" for i in range(16)]
     ch_names = [f"{ch}_left" for ch in ch_names] + [f"{ch}_right" for ch in ch_names]
@@ -77,21 +67,40 @@ def get_raw(session_name):
     raw.set_annotations(annot)
     return raw
 
-
-# raw = get_raw(df.session.iloc[0])
-# raw.save("tmp_with_annot_raw.fif", overwrite=True)
-
 # %%
 
-for ix_subject, (user, df_user) in enumerate(df.groupby("user")):
-    for ix_session in tqdm.tqdm(range(len(df_user.session.values))):
-        raw = get_raw(df_user.iloc[ix_session].session)
-        bids_path = mne_bids.BIDSPath(
-            subject=f"{ix_subject + 1:02d}",
-            session=f"{ix_session + 1:02d}",
-            task="typing",
-            root="bids_data",
-        )
-        mne_bids.write_raw_bids(
-            raw, bids_path, overwrite=True, format="BrainVision", allow_preload=True
-        )
+@click.command()
+@click.option(
+    "--dataset-root",
+    type=str,
+    default=Path(__file__).parents[1].joinpath("data"),
+    help="Original dataset root directory (defaults to 'data' folder)",
+)
+@click.option(
+    "--bids-root",
+    type=str,
+    default=Path(__file__).parents[1].joinpath("bids_data"),
+    help="BIDS dataset root directory (defaults to 'bids_data' folder)",
+)
+def main(
+    dataset_root: str,
+    bids_root: str,
+):
+    df = pd.read_csv(Path(dataset_root).joinpath("metadata.csv"))
+    df.quality_check_tags = df.quality_check_tags.apply(yaml.safe_load)
+
+    for ix_subject, (user, df_user) in enumerate(df.groupby("user")):
+        for ix_session in tqdm.tqdm(range(len(df_user.session.values))):
+            raw = get_raw(df_user.iloc[ix_session].session, dataset_root)
+            bids_path = mne_bids.BIDSPath(
+                subject=f"{ix_subject + 1:02d}",
+                session=f"{ix_session + 1:02d}",
+                task="typing",
+                root=bids_root,
+            )
+            mne_bids.write_raw_bids(
+                raw, bids_path, overwrite=True, format="BrainVision", allow_preload=True
+            )
+
+if __name__ == "__main__":
+    main()

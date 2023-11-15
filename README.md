@@ -49,6 +49,12 @@ The following figure visualizes the dataset splits for training, validation and 
   <img src="https://user-images.githubusercontent.com/172884/131012465-504eccbf-8eac-4432-b8aa-0e453ad85b49.png" alt="Data splits">
 </p>
 
+To re-format data in BIDS format,
+```shell
+python scripts/convert_to_bids.py
+```
+
+
 ### Training
 
 Generic user model:
