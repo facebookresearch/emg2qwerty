@@ -404,9 +404,7 @@ class WindowedEmgDataset(torch.utils.data.Dataset):
     stride: InitVar[Optional[int]] = None
     padding: InitVar[Tuple[int, int]] = (0, 0)
     jitter: bool = False
-    transform: Transform[np.ndarray, torch.Tensor] = field(
-        default_factory=lambda: transforms.ToTensor()
-    )
+    transform: Transform[np.ndarray, torch.Tensor] = field(default_factory=transforms.ToTensor)
 
     def __post_init__(
         self,

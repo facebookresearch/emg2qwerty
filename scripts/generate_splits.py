@@ -62,7 +62,7 @@ def sample_test_users(
     unique_counts = np.unique(sessions_per_user.values)
 
     # Pick users with the most number of sessions first until we have `n` users
-    test_users = pd.Series(dtype=object)
+    test_users = []
     for num_sessions in unique_counts[::-1]:
         remaining = n - len(test_users)
         if remaining <= 0:
@@ -71,8 +71,9 @@ def sample_test_users(
         users = sessions_per_user[sessions_per_user == num_sessions]
         if len(users) > remaining:
             users = users.sample(remaining, random_state=seed)
-        test_users = test_users.append(users.index.to_series())
+        test_users.extend(users.index)
 
+    test_users = pd.Series(test_users)
     return test_users
 
 
