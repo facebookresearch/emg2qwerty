@@ -49,7 +49,7 @@ The following figure visualizes the dataset splits for training, validation and 
   <img src="https://user-images.githubusercontent.com/172884/131012465-504eccbf-8eac-4432-b8aa-0e453ad85b49.png" alt="Data splits">
 </p>
 
-To re-format data in BIDS format,
+To re-format data in [EEG BIDS format](https://bids-specification.readthedocs.io/en/stable/04-modality-specific-files/03-electroencephalography.html),
 ```shell
 python scripts/convert_to_bids.py
 ```
