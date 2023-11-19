@@ -9,8 +9,9 @@ dependencies:
   - python>=3.8
   - pytorch::pytorch=2.0.1
   - pytorch::pytorch-cuda=11.7.0
+  - pytorch::torchaudio=2.0.2
+  - pytorch::torchvision=0.15.2
   - pytorch-lightning>=2.0.9
-  - torchaudio>=2.0.1
   - numpy
   - scipy
   - h5py>=3.0

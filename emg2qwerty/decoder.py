@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import math
-from dataclasses import InitVar, dataclass
+from dataclasses import InitVar, dataclass, field
 from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple
 
 import kenlm
@@ -34,7 +34,7 @@ class Decoder:
     """Base class for a stateful decoder that takes in emissions and returns
     decoded label sequences."""
 
-    _charset: CharacterSet = charset()
+    _charset: CharacterSet = field(default_factory=charset)
 
     def reset(self) -> None:
         """Reset decoder state."""

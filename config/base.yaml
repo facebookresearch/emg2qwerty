@@ -1,4 +1,5 @@
 defaults:
+  - _self_
   - user: generic
   - transforms: log_spectrogram
   - model: tds_conv_ctc
@@ -17,7 +18,8 @@ monitor_mode: min
 trainer:
   max_epochs: 150
   num_nodes: 1
-  gpus: 1
+  devices: 1
+  accelerator: gpu
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor

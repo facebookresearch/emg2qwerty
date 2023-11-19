@@ -62,7 +62,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
             [
                 WindowedEmgDataset(
                     hdf5_path,
-                    transform=self._train_transforms,
+                    transform=self.train_transforms,
                     window_length=self.window_length,
                     padding=self.padding,
                     jitter=True,
@@ -74,7 +74,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
             [
                 WindowedEmgDataset(
                     hdf5_path,
-                    transform=self._val_transforms,
+                    transform=self.val_transforms,
                     window_length=self.window_length,
                     padding=self.padding,
                     jitter=False,
@@ -86,7 +86,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
             [
                 WindowedEmgDataset(
                     hdf5_path,
-                    transform=self._test_transforms,
+                    transform=self.test_transforms,
                     # Feed the entire session at once without windowing/padding
                     # at test time for more realism
                     window_length=None,
@@ -258,7 +258,7 @@ class TDSConvCTCModule(pl.LightningModule):
         )
 
 
-@hydra.main(config_path="../config", config_name="base")
+@hydra.main(config_path="../config", config_name="base", version_base="1.1")
 def main(config: DictConfig):
     log.info(f"\nConfig:\n{OmegaConf.to_yaml(config)}")
 

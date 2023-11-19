@@ -59,14 +59,15 @@ python scripts/convert_to_bids.py
 
 Generic user model:
 ```shell
-python -m emg2qwerty.train user=generic trainer.gpus=8 +cluster=local -m
+python -m emg2qwerty.train user=generic trainer.accelerator=gpu trainer.devices=8 +cluster=local -m
 ```
 
 Personalized user models:
 ```shell
 python -m emg2qwerty.train \
   user="glob(user*)" \
-  trainer.gpus=1 \
+  trainer.accelerator=gpu \
+  trainer.devices=1 \
   checkpoint="${HOME}/emg2qwerty/models/generic.ckpt" \
   +cluster=local -m
 
@@ -82,7 +83,8 @@ python -m emg2qwerty.train \
   user=user0 \
   decoder=ctc_greedy \
   train=False \
-  trainer.gpus=0 \
+  trainer.accelerator=gpu \
+  trainer.devices=0 \
   checkpoint="${HOME}/emg2qwerty/models/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   +cluster=local -m
@@ -94,7 +96,8 @@ python -m emg2qwerty.train \
   user=user0 \
   decoder=ctc_beam \
   train=False \
-  trainer.gpus=0 \
+  trainer.accelerator=gpu \
+  trainer.devices=0 \
   checkpoint="${HOME}/emg2qwerty/models/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   +cluster=local -m
