@@ -143,7 +143,7 @@ class MultiBandRotationInvariantMLP(nn.Module):
 
         # Separate MLP for each band
         self.mlps = nn.ModuleList()
-        for i in range(num_bands):
+        for _ in range(num_bands):
             self.mlps.append(
                 RotationInvariantMLP(
                     in_features, mlp_features, pooling=pooling, offsets=offsets
@@ -197,7 +197,7 @@ class TDSConv2dBlock(nn.Module):
 
         # Skip connection after downsampling
         T_out = x.shape[0]
-        x += inputs[-T_out:]
+        x = x + inputs[-T_out:]
 
         # Layer norm over C
         return self.layer_norm(x)  # TNC
@@ -226,7 +226,7 @@ class TDSFullyConnectedBlock(nn.Module):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs  # TNC
         x = self.fc_block(x)
-        x += inputs
+        x = x + inputs
         return self.layer_norm(x)  # TNC
 
 
