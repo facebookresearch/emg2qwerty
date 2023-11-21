@@ -44,6 +44,9 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         train_sessions: Sequence[Path],
         val_sessions: Sequence[Path],
         test_sessions: Sequence[Path],
+        train_transform: Transform[np.ndarray, torch.Tensor],
+        val_transform: Transform[np.ndarray, torch.Tensor],
+        test_transform: Transform[np.ndarray, torch.Tensor],
     ) -> None:
         super().__init__()
 
@@ -56,6 +59,10 @@ class WindowedEmgDataModule(pl.LightningDataModule):
         self.train_sessions = train_sessions
         self.val_sessions = val_sessions
         self.test_sessions = test_sessions
+
+        self.train_transform = train_transform
+        self.val_transform = val_transform
+        self.test_transform = test_transform
 
     def setup(self, stage: Optional[str] = None) -> None:
         self.train_dataset = ConcatDataset(
@@ -276,15 +283,6 @@ def main(config: DictConfig):
     # (see `pl_worker_init_fn()`).
     pl.seed_everything(config.seed, workers=True)
 
-    # Dataset session paths
-    def _full_paths(root: str, dataset: ListConfig) -> List[Path]:
-        sessions = [session["session"] for session in dataset]
-        return [Path(root).joinpath(f"{session}.hdf5") for session in sessions]
-
-    train_sessions = _full_paths(config.dataset.root, config.dataset.train)
-    val_sessions = _full_paths(config.dataset.root, config.dataset.val)
-    test_sessions = _full_paths(config.dataset.root, config.dataset.test)
-
     # Instantiate LightningModule
     log.info(f"Instantiating LightningModule {config.module}")
     module = instantiate(
@@ -303,15 +301,30 @@ def main(config: DictConfig):
             decoder=config.decoder,
         )
 
+    # Helper to instantiate full paths for dataset sessions
+    def _full_session_paths(dataset: ListConfig) -> List[Path]:
+        sessions = [session["session"] for session in dataset]
+        return [
+            Path(config.dataset.root).joinpath(f"{session}.hdf5")
+            for session in sessions
+        ]
+
+    # Helper to instantiate transforms
+    def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
+        return transforms.Compose([instantiate(cfg) for cfg in configs])
+
     # Instantiate LightningDataModule
     log.info(f"Instantiating LightningDataModule {config.datamodule}")
     datamodule = instantiate(
         config.datamodule,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
-        train_sessions=train_sessions,
-        val_sessions=val_sessions,
-        test_sessions=test_sessions,
+        train_sessions=_full_session_paths(config.dataset.train),
+        val_sessions=_full_session_paths(config.dataset.val),
+        test_sessions=_full_session_paths(config.dataset.test),
+        train_transform=_build_transform(config.transforms.train),
+        val_transform=_build_transform(config.transforms.val),
+        test_transform=_build_transform(config.transforms.test),
     )
 
     # Instantiate transforms

@@ -83,8 +83,7 @@ python -m emg2qwerty.train \
   user=user0 \
   decoder=ctc_greedy \
   train=False \
-  trainer.accelerator=gpu \
-  trainer.devices=0 \
+  trainer.accelerator=cpu \
   checkpoint="${HOME}/emg2qwerty/models/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   +cluster=local -m
@@ -96,8 +95,7 @@ python -m emg2qwerty.train \
   user=user0 \
   decoder=ctc_beam \
   train=False \
-  trainer.accelerator=gpu \
-  trainer.devices=0 \
+  trainer.accelerator=cpu \
   checkpoint="${HOME}/emg2qwerty/models/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   +cluster=local -m
