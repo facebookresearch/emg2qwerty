@@ -313,6 +313,10 @@ def main(config: DictConfig):
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
         return transforms.Compose([instantiate(cfg) for cfg in configs])
 
+    train_transform = _build_transform(config.transforms.train)
+    val_transform = _build_transform(config.transforms.val)
+    test_transform = _build_transform(config.transforms.test)
+
     # Instantiate LightningDataModule
     log.info(f"Instantiating LightningDataModule {config.datamodule}")
     datamodule = instantiate(
@@ -322,14 +326,15 @@ def main(config: DictConfig):
         train_sessions=_full_session_paths(config.dataset.train),
         val_sessions=_full_session_paths(config.dataset.val),
         test_sessions=_full_session_paths(config.dataset.test),
-        train_transform=_build_transform(config.transforms.train),
-        val_transform=_build_transform(config.transforms.val),
-        test_transform=_build_transform(config.transforms.test),
+        train_transform=train_transform,
+        val_transform=val_transform,
+        test_transform=test_transform,
     )
 
-    # Instantiate transforms
-    def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
-        return transforms.Compose([instantiate(cfg) for cfg in configs])
+    # XXX no idea why this is still needed...
+    datamodule.train_transform = _build_transform(config.transforms.train)
+    datamodule.val_transform = _build_transform(config.transforms.val)
+    datamodule.test_transform = _build_transform(config.transforms.test)
 
     # Instantiate callbacks
     callback_configs = config.get("callbacks", [])
