@@ -69,7 +69,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
             [
                 WindowedEmgDataset(
                     hdf5_path,
-                    transform=self.train_transforms,
+                    transform=self.train_transform,
                     window_length=self.window_length,
                     padding=self.padding,
                     jitter=True,
@@ -81,7 +81,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
             [
                 WindowedEmgDataset(
                     hdf5_path,
-                    transform=self.val_transforms,
+                    transform=self.val_transform,
                     window_length=self.window_length,
                     padding=self.padding,
                     jitter=False,
@@ -93,7 +93,7 @@ class WindowedEmgDataModule(pl.LightningDataModule):
             [
                 WindowedEmgDataset(
                     hdf5_path,
-                    transform=self.test_transforms,
+                    transform=self.test_transform,
                     # Feed the entire session at once without windowing/padding
                     # at test time for more realism
                     window_length=None,
@@ -330,10 +330,6 @@ def main(config: DictConfig):
     # Instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
         return transforms.Compose([instantiate(cfg) for cfg in configs])
-
-    datamodule.train_transforms = _build_transform(config.transforms.train)
-    datamodule.val_transforms = _build_transform(config.transforms.val)
-    datamodule.test_transforms = _build_transform(config.transforms.test)
 
     # Instantiate callbacks
     callback_configs = config.get("callbacks", [])
