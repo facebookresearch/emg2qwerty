@@ -96,17 +96,23 @@ def main(config: DictConfig):
         callbacks=callbacks,
     )
 
-    # Train
     if config.train:
+        # Check if a past checkpoint exists to resume training from
         checkpoint_dir = Path.cwd().joinpath("checkpoints")
         resume_from_checkpoint = utils.get_last_checkpoint(checkpoint_dir)
         if resume_from_checkpoint is not None:
             log.info(f"Resuming training from checkpoint {resume_from_checkpoint}")
 
+        # Train
         trainer.fit(module, datamodule, ckpt_path=resume_from_checkpoint)
 
-    # TODO (vish): explicitly load best checkpoint here?
-    # Validate and test on the trained model or the provided checkpoint
+        # Load best checkpoint
+        module = module.load_from_checkpoint(
+            trainer.checkpoint_callback.best_model_path
+        )
+
+    # Validate and test on the best checkpoint (if training) or on the
+    # specified config.checkpoint (otherwise)
     val_metrics = trainer.validate(module, datamodule)
     test_metrics = trainer.test(module, datamodule)
 
