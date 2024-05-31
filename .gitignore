@@ -12,7 +12,7 @@ __pycache__/
 # Mac
 .DS_Store
 
-# Environments
+# Build and Environments
 .condaenv
 .env
 .venv
@@ -21,6 +21,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+build
+dist
 *.egg-info
 
 # mypy
@@ -41,6 +43,7 @@ dmypy.json
 .hypothesis
 
 # Logs and checkpoints
+*.ckpt
 logs/
 lightning_logs/
 
