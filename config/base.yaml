@@ -5,19 +5,22 @@ defaults:
   - optimizer: adam
   - lr_scheduler: linear_warmup_cosine_annealing
   - decoder: ctc_greedy
+  - cluster: local
+  - _self_
 
 seed: 1501
 batch_size: 32
 num_workers: 4  # Number of workers for dataloading
 train: True  # Whether to train or only run validation and test
 checkpoint: null  # Optional path to checkpoint file
-monitor_metric: val_CER
+monitor_metric: val/CER
 monitor_mode: min
 
 trainer:
-  max_epochs: 150
+  accelerator: gpu
+  devices: 1
   num_nodes: 1
-  gpus: 1
+  max_epochs: 150
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
@@ -26,12 +29,6 @@ callbacks:
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     save_last: True
-    verbose: True
-  - _target_: pytorch_lightning.callbacks.EarlyStopping
-    monitor: ${monitor_metric}
-    mode: ${monitor_mode}
-    patience: 20
-    check_on_train_epoch_end: False
     verbose: True
 
 dataset:
@@ -49,6 +46,7 @@ hydra:
     config:
       override_dirname:
         exclude_keys:
-          - cluster
           - checkpoint
+          - cluster
           - seed
+          - trainer.accelerator

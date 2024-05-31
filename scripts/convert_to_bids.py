@@ -1,16 +1,25 @@
-"""Script to convert dataset to BIDS format (pretending it's EEG)"""
-# %%
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+
+"""
+Script to convert the dataset from HDF5 to BIDS format (pretending it's EEG).
+https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html.
+"""
 
 from pathlib import Path
-import yaml
+
 import click
-import numpy as np
-import pandas as pd
 import mne
 import mne_bids
+import numpy as np
+import pandas as pd
 import tqdm
+import yaml
 
-from emg2qwerty.data import Emg2QwertySessionData
+from emg2qwerty.data import EMGSessionData
 
 mne.set_log_level("WARNING")
 
@@ -19,7 +28,7 @@ def get_raw(session_name: str, dataset_root: str) -> mne.io.Raw:
     """Read data in HDF5 and get an MNE Raw object with keystrokes and prompts
     saved as mne.Annotations."""
     fname = Path(dataset_root) / (session_name + ".hdf5")
-    session = Emg2QwertySessionData(fname)
+    session = EMGSessionData(fname)
     label_data = session.ground_truth()
 
     ch_names = [f"emg{i}" for i in range(16)]
@@ -34,15 +43,16 @@ def get_raw(session_name: str, dataset_root: str) -> mne.io.Raw:
     # Fix idx as certain keys arrive after then final timestamp
     idx[idx >= len(session["time"])] = len(session["time"]) - 1
 
-    chars = list(label_data.label_str)
+    chars = list(label_data.text)
     mapping = {
         "⌫": "Key.backspace",
         "⏎": "Key.enter",
         "⇧": "Key.shift",
         " ": "Key.space",
     }
-    chars_ = [mapping[c] if c in mapping else c for c in chars]
-    chars_ = ["key/" + c for c in chars_]  # prefix with "key" to distinguish with prompts
+    chars_ = [mapping.get(c, c) for c in chars]
+    # prefix with "key" to distinguish with prompts
+    chars_ = ["key/" + c for c in chars_]
     annot = mne.Annotations(
         onset=raw.times[idx], duration=np.zeros(len(idx)), description=chars_
     )
@@ -58,7 +68,8 @@ def get_raw(session_name: str, dataset_root: str) -> mne.io.Raw:
     onset = raw.times[idx_start]
     duration = raw.times[idx_end] - raw.times[idx_start]
     description = prompts.payload.apply(pd.Series).text.str.replace("⏎", "\\n").values
-    description = ["prompt/" + d for d in description]  # prefix with "prompt" to distinguish with keys
+    # prefix with "prompt" to distinguish with keys
+    description = ["prompt/" + d for d in description]
     annot_prompts = mne.Annotations(
         onset=onset, duration=duration, description=description
     )
@@ -67,7 +78,6 @@ def get_raw(session_name: str, dataset_root: str) -> mne.io.Raw:
     raw.set_annotations(annot)
     return raw
 
-# %%
 
 @click.command()
 @click.option(
@@ -89,7 +99,7 @@ def main(
     df = pd.read_csv(Path(dataset_root).joinpath("metadata.csv"))
     df.quality_check_tags = df.quality_check_tags.apply(yaml.safe_load)
 
-    for ix_subject, (user, df_user) in enumerate(df.groupby("user")):
+    for ix_subject, (_, df_user) in enumerate(df.groupby("user")):
         for ix_session in tqdm.tqdm(range(len(df_user.session.values))):
             raw = get_raw(df_user.iloc[ix_session].session, dataset_root)
             bids_path = mne_bids.BIDSPath(
@@ -101,6 +111,7 @@ def main(
             mne_bids.write_raw_bids(
                 raw, bids_path, overwrite=True, format="BrainVision", allow_preload=True
             )
+
 
 if __name__ == "__main__":
     main()

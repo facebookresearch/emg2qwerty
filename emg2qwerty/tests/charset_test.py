@@ -1,33 +1,34 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
 import string
-from typing import List, Tuple
 
-from emg2qwerty.charset import charset
+import pytest
+
+from emg2qwerty.charset import charset, KeyChar
 
 
-def test_clean_str():
-    _charset = charset()
-    test_samples = [
+@pytest.mark.parametrize(
+    "_input, expected",
+    [
         ("", ""),
         ("aa", "aa"),
         ("\n\r\b\x08", "⏎⏎⌫⌫"),
         ("⏎\n⇧⌫\b", "⏎⏎⇧⌫⌫"),
         ("⏎\n⇧⌫�\b", "⏎⏎⇧⌫⌫"),
         ("’“”—", '\'""-'),
-    ]
+    ],
+)
+def test_clean_str(_input: str, expected: str):
+    assert charset().clean_str(_input) == expected
 
-    for _input, expected in test_samples:
-        assert _charset.clean_str(_input) == expected
 
-
-def test_str_to_keys():
-    _charset = charset()
-    test_samples = [
+@pytest.mark.parametrize(
+    "_input, expected",
+    [
         ("", []),
         (string.ascii_lowercase, list(string.ascii_lowercase)),
         (string.ascii_uppercase, list(string.ascii_uppercase)),
@@ -45,15 +46,15 @@ def test_str_to_keys():
                 "Key.shift",
             ],
         ),
-    ]
+    ],
+)
+def test_str_to_keys(_input: str, expected: list[KeyChar]):
+    assert charset().str_to_keys(_input) == expected
 
-    for _input, expected in test_samples:
-        assert _charset.str_to_keys(_input) == expected
 
-
-def test_keys_to_str():
-    _charset = charset()
-    test_samples: List[Tuple[List[str], str]] = [
+@pytest.mark.parametrize(
+    "_input, expected",
+    [
         ([], ""),
         (list(string.ascii_lowercase), string.ascii_lowercase),
         (list(string.ascii_uppercase), string.ascii_uppercase),
@@ -71,15 +72,15 @@ def test_keys_to_str():
             ],
             "⌫⌫⏎⏎⏎  ⇧",
         ),
-    ]
+    ],
+)
+def test_keys_to_str(_input: list[KeyChar], expected: str):
+    assert charset().keys_to_str(_input) == expected
 
-    for _input, expected in test_samples:
-        assert _charset.keys_to_str(_input) == expected
 
-
-def test_str_to_labels():
-    _charset = charset()
-    test_samples = [
+@pytest.mark.parametrize(
+    "_input",
+    [
         "",
         string.ascii_lowercase,
         string.ascii_uppercase,
@@ -90,8 +91,8 @@ def test_str_to_labels():
         "⏎\n⇧⌫\b",
         "⏎\n⇧⌫�\b",
         "’“”—",
-    ]
-
-    for input_str in test_samples:
-        labels = _charset.str_to_labels(input_str)
-        assert _charset.labels_to_str(labels) == _charset.clean_str(input_str)
+    ],
+)
+def test_str_to_labels(_input: str):
+    labels = charset().str_to_labels(_input)
+    assert charset().labels_to_str(labels) == charset().clean_str(_input)

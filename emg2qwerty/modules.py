@@ -1,10 +1,10 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import torch
 from torch import nn
@@ -22,22 +22,24 @@ class SpectrogramNorm(nn.Module):
 
     Args:
         channels (int): Total number of electrode channels across bands
-            such that the normalization statistics are calculated per channel..
+            such that the normalization statistics are calculated per channel.
             Should be equal to num_bands * electrode_chanels.
     """
 
     def __init__(self, channels: int) -> None:
         super().__init__()
+        self.channels = channels
+
         self.batch_norm = nn.BatchNorm2d(channels)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         T, N, bands, C, freq = inputs.shape  # (T, N, bands=2, C=16, freq)
-        x = inputs.movedim(0, -1)  # (N, bands=2, C=16, freq, T)
+        assert self.channels == bands * C
 
+        x = inputs.movedim(0, -1)  # (N, bands=2, C=16, freq, T)
         x = x.reshape(N, bands * C, freq, T)
         x = self.batch_norm(x)
         x = x.reshape(N, bands, C, freq, T)
-
         return x.movedim(-1, 0)  # (T, N, bands=2, C=16, freq)
 
 
@@ -71,18 +73,18 @@ class RotationInvariantMLP(nn.Module):
         super().__init__()
 
         assert len(mlp_features) > 0
-        mlp_layers = []
+        mlp: list[nn.Module] = []
         for out_features in mlp_features:
-            mlp_layers.extend(
+            mlp.extend(
                 [
                     nn.Linear(in_features, out_features),
-                    nn.ReLU(inplace=True),
+                    nn.ReLU(),
                 ]
             )
             in_features = out_features
-        self.mlp = nn.Sequential(*mlp_layers)
+        self.mlp = nn.Sequential(*mlp)
 
-        assert pooling in ["max", "mean"], f"Unsupported pooling: {pooling}"
+        assert pooling in {"max", "mean"}, f"Unsupported pooling: {pooling}"
         self.pooling = pooling
 
         self.offsets = offsets if len(offsets) > 0 else (0,)
@@ -102,7 +104,10 @@ class RotationInvariantMLP(nn.Module):
 
         # Pool over rotations:
         # (T, N, rotation, mlp_features[-1]) -> (T, N, mlp_features[-1])
-        return x.max(dim=2).values if self.pooling == "max" else x.mean(dim=2)
+        if self.pooling == "max":
+            return x.max(dim=2).values
+        else:
+            return x.mean(dim=2)
 
 
 class MultiBandRotationInvariantMLP(nn.Module):
@@ -141,21 +146,25 @@ class MultiBandRotationInvariantMLP(nn.Module):
         self.num_bands = num_bands
         self.stack_dim = stack_dim
 
-        # Separate MLP for each band
-        self.mlps = nn.ModuleList()
-        for i in range(num_bands):
-            self.mlps.append(
+        # One MLP per band
+        self.mlps = nn.ModuleList(
+            [
                 RotationInvariantMLP(
-                    in_features, mlp_features, pooling=pooling, offsets=offsets
+                    in_features=in_features,
+                    mlp_features=mlp_features,
+                    pooling=pooling,
+                    offsets=offsets,
                 )
-            )
+                for _ in range(num_bands)
+            ]
+        )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         assert inputs.shape[self.stack_dim] == self.num_bands
 
         inputs_per_band = inputs.unbind(self.stack_dim)
         outputs_per_band = [
-            mlp(input) for mlp, input in zip(self.mlps, inputs_per_band)
+            mlp(_input) for mlp, _input in zip(self.mlps, inputs_per_band)
         ]
         return torch.stack(outputs_per_band, dim=self.stack_dim)
 
@@ -176,15 +185,16 @@ class TDSConv2dBlock(nn.Module):
 
     def __init__(self, channels: int, width: int, kernel_width: int) -> None:
         super().__init__()
+        self.channels = channels
+        self.width = width
 
         self.conv2d = nn.Conv2d(
-            in_channels=channels, out_channels=channels, kernel_size=(1, kernel_width)
+            in_channels=channels,
+            out_channels=channels,
+            kernel_size=(1, kernel_width),
         )
         self.relu = nn.ReLU()
         self.layer_norm = nn.LayerNorm(channels * width)
-
-        self.channels = channels
-        self.width = width
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         T_in, N, C = inputs.shape  # TNC
@@ -197,7 +207,7 @@ class TDSConv2dBlock(nn.Module):
 
         # Skip connection after downsampling
         T_out = x.shape[0]
-        x += inputs[-T_out:]
+        x = x + inputs[-T_out:]
 
         # Layer norm over C
         return self.layer_norm(x)  # TNC
@@ -218,7 +228,7 @@ class TDSFullyConnectedBlock(nn.Module):
 
         self.fc_block = nn.Sequential(
             nn.Linear(num_features, num_features),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(num_features, num_features),
         )
         self.layer_norm = nn.LayerNorm(num_features)
@@ -226,7 +236,7 @@ class TDSFullyConnectedBlock(nn.Module):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         x = inputs  # TNC
         x = self.fc_block(x)
-        x += inputs
+        x = x + inputs
         return self.layer_norm(x)  # TNC
 
 
@@ -253,7 +263,7 @@ class TDSConvEncoder(nn.Module):
         super().__init__()
 
         assert len(block_channels) > 0
-        tds_conv_blocks = []
+        tds_conv_blocks: list[nn.Module] = []
         for channels in block_channels:
             assert (
                 num_features % channels == 0

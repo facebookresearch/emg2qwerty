@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
@@ -26,7 +26,7 @@ fi
 
 NGRAM_ORDER=$1
 
-SRC_DIR="$(dirname $0)"
+SRC_DIR=$(dirname "$0")
 ROOT_DIR="${SRC_DIR}/../.."
 OUT_DIR="${ROOT_DIR}/models"
 
@@ -40,6 +40,7 @@ export PYTHONPATH="${PYTHONPATH}:${ROOT_DIR}"
 export PATH="${PATH}:~/kenlm/build/bin"
 
 # Download and preprocess wikitext-103 raw character level dataset:
+# TODO (vish): Update URL
 # https://blog.einstein.ai/the-wikitext-long-term-dependency-language-modeling-dataset/
 if [ ! -d wikitext-103-raw ]; then
   echo "Downloading wikitext-103 raw character level dataset"
@@ -47,11 +48,11 @@ if [ ! -d wikitext-103-raw ]; then
   unzip wikitext-103-raw-v1.zip
 
   echo "Preprocessing to ${PREPROCESSED_DATA}"
-  cat wikitext-103-raw/* | python ${PREPROCESSOR} > ${PREPROCESSED_DATA}
+  cat wikitext-103-raw/* | python "${PREPROCESSOR}" > "${PREPROCESSED_DATA}"
 fi
 
-mkdir -p ${OUT_DIR}
+mkdir -p "${OUT_DIR}"
 
 echo -e "\nBuilding ${NGRAM_ORDER}-gram char-LM"
-lmplz -o ${NGRAM_ORDER} --discount_fallback < ${PREPROCESSED_DATA} > ${LM_ARPA}
-build_binary ${LM_ARPA} ${LM_BIN}
+lmplz -o "${NGRAM_ORDER}" --discount_fallback < "${PREPROCESSED_DATA}" > "${LM_ARPA}"
+build_binary "${LM_ARPA}" "${LM_BIN}"

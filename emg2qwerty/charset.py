@@ -1,13 +1,16 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import string
 from collections import OrderedDict
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import ClassVar, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import ClassVar
 
 import unidecode
 
@@ -15,10 +18,10 @@ import unidecode
 UniChar = str  # Unicode character
 KeyChar = str  # pynput keyboard.Key
 
-_charset: Optional["CharacterSet"] = None  # Global instance of CharacterSet
+_charset: CharacterSet | None = None  # Global instance of CharacterSet
 
 
-def charset() -> "CharacterSet":
+def charset() -> CharacterSet:
     """Lazily load and return a global instance of ``CharacterSet``."""
     global _charset
     if _charset is None:
@@ -56,14 +59,14 @@ class CharacterSet:
     """
 
     # Tuples of supported chars and corresponding unicode values.
-    CHAR_TO_UNICODE: ClassVar[List[Tuple[UniChar, int]]] = [
+    CHAR_TO_UNICODE: ClassVar[list[tuple[UniChar, int]]] = [
         (c, ord(c)) for c in string.ascii_letters + string.digits + string.punctuation
     ]
 
     # Tuples of supported modifier keys (in pynput representation) and
     # corresponding unicode values.
     # https://wincent.com/wiki/Unicode_representations_of_modifier_keys.
-    MODIFIER_TO_UNICODE: ClassVar[List[Tuple[KeyChar, int]]] = [
+    MODIFIER_TO_UNICODE: ClassVar[list[tuple[KeyChar, int]]] = [
         ("Key.backspace", 9003),  # ⌫
         ("Key.enter", 9166),  # ⏎
         ("Key.space", 32),
@@ -114,22 +117,12 @@ class CharacterSet:
     def __len__(self) -> int:
         return len(self._key_to_unicode)
 
-    def __contains__(self, item: Union[KeyChar, int]) -> bool:
+    def __contains__(self, item: KeyChar | int) -> bool:
         if isinstance(item, KeyChar):
             return item in self._key_to_unicode
         if isinstance(item, int):
             return item in self._unicode_to_key
         raise ValueError(f"Unexpected type: {type(item)}")
-
-    @property
-    def allowed_keys(self) -> Tuple[KeyChar, ...]:
-        """Sequence of allowed keys, order respected."""
-        return tuple(self._key_to_unicode.keys())
-
-    @property
-    def allowed_unicodes(self) -> Tuple[int, ...]:
-        """Sequence of allowed unicode values, order respected."""
-        return tuple(self._key_to_unicode.values())
 
     @property
     def null_class(self) -> int:
@@ -141,13 +134,28 @@ class CharacterSet:
         """Number of training classes including null-class (blank label)."""
         return len(self) + 1
 
+    @property
+    def allowed_keys(self) -> tuple[KeyChar, ...]:
+        """Sequence of allowed keys, order respected."""
+        return tuple(self._key_to_unicode.keys())
+
+    @property
+    def allowed_unicodes(self) -> tuple[int, ...]:
+        """Sequence of allowed unicode values, order respected."""
+        return tuple(self._key_to_unicode.values())
+
+    @property
+    def allowed_chars(self) -> tuple[UniChar, ...]:
+        """Sequence of allowed chars, order respected."""
+        return tuple(self.unicode_to_char(key) for key in self.allowed_unicodes)
+
     def key_to_unicode(self, key: KeyChar) -> int:
         """Fetch the unicode value corresponding to the given key."""
-        return self._key_to_unicode[key]
+        return self._key_to_unicode[key]  # type: ignore[no-any-return]
 
     def unicode_to_key(self, unicode_val: int) -> KeyChar:
         """Fetch the key corresponding to the given unicode value."""
-        return self._unicode_to_key[unicode_val]
+        return self._unicode_to_key[unicode_val]  # type: ignore[no-any-return]
 
     def key_to_label(self, key: KeyChar) -> int:
         """Fetch the categorical label corresponding to the given key."""
@@ -165,7 +173,7 @@ class CharacterSet:
         """Fetch the unicode value for the given categorical label."""
         return self.allowed_unicodes[label]
 
-    def str_to_keys(self, unicode_str: str) -> List[KeyChar]:
+    def str_to_keys(self, unicode_str: str) -> list[KeyChar]:
         r"""Convert a string to the corresponding sequence of supported keys
         after cleaning up and standardizing.
 
@@ -185,7 +193,7 @@ class CharacterSet:
         unicode_str = "".join(chr(self.key_to_unicode(key)) for key in keys)
         return self._normalize_str(unicode_str)
 
-    def str_to_labels(self, unicode_str: str) -> List[int]:
+    def str_to_labels(self, unicode_str: str) -> list[int]:
         """Convert a string to the corresponding sequence of labels after
         cleaning up and stardardizing. Also see ``str_to_keys()``."""
         keys = self.str_to_keys(unicode_str)
@@ -197,7 +205,22 @@ class CharacterSet:
         keys = [self.label_to_key(label) for label in labels]
         return self.keys_to_str(keys)
 
-    def clean_keys(self, keys: Sequence[KeyChar]) -> List[KeyChar]:
+    def key_to_char(self, key: KeyChar) -> UniChar:
+        """Convert a single key to its corresponding textual representation
+        after standardizing."""
+        return self.unicode_to_char(self.key_to_unicode(key))
+
+    def unicode_to_char(self, unicode_val: int) -> UniChar:
+        """Convert a unicode value to its corresponding textual representation
+        after standardizing."""
+        return self._normalize_str(chr(unicode_val))
+
+    def label_to_char(self, label: int) -> UniChar:
+        """Convert a single label to its corresponding textual representation
+        after standardizing."""
+        return self.key_to_char(self.label_to_key(label))
+
+    def clean_keys(self, keys: Sequence[KeyChar]) -> list[KeyChar]:
         """Normalize and filter the given sequence of keys in any
         representation. Every single key returned is guaranteed to be a
         member of ``allowed_keys`` by standardizing supported ones and
@@ -220,7 +243,7 @@ class CharacterSet:
         # Convert back to str and return
         return self.keys_to_str(keys)
 
-    def _normalize_keys(self, keys: Sequence[KeyChar]) -> List[KeyChar]:
+    def _normalize_keys(self, keys: Sequence[KeyChar]) -> list[KeyChar]:
         """Normalize the given sequence of keys in any representation.
 
         NOTE: This doesn NOT filter out out-of-vocabulary keys, directly call

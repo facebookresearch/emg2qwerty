@@ -1,11 +1,12 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import torch
@@ -184,7 +185,7 @@ class LogSpectrogram:
     def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
         x = tensor.movedim(0, -1)  # (T, ..., C) -> (..., C, T)
         spec = self.spectrogram(x)  # (..., C, freq, T)
-        logspec = torch.log10(spec + 1e-6)
+        logspec = torch.log10(spec + 1e-6)  # (..., C, freq, T)
         return logspec.movedim(-1, 0)  # (T, ..., C, freq)
 
 
@@ -240,5 +241,5 @@ class SpecAugment:
         for _ in range(n_f_masks):
             x = self.freq_mask(x, mask_value=self.mask_value)
 
-        # ( ..., C, freq, T) -> (T, ..., C, freq)
+        # (..., C, freq, T) -> (T, ..., C, freq)
         return x.movedim(-1, 0)

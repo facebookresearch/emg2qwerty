@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
@@ -6,15 +6,19 @@
 
 from __future__ import annotations
 
+import abc
+
 import hashlib
 import math
-from dataclasses import InitVar, dataclass
-from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple
+from collections.abc import Iterator
+from dataclasses import dataclass, field, InitVar
+from typing import Any, ClassVar
 
 import kenlm
 import numpy as np
 
 from emg2qwerty.charset import CharacterSet, charset
+from emg2qwerty.data import LabelData
 
 
 def logsumexp(*xs: float) -> float:
@@ -30,20 +34,26 @@ def logsumexp(*xs: float) -> float:
 
 
 @dataclass
-class Decoder:
+class Decoder(abc.ABC):
     """Base class for a stateful decoder that takes in emissions and returns
     decoded label sequences."""
 
-    _charset: CharacterSet = charset()
+    _charset: CharacterSet = field(default_factory=charset)
 
+    @abc.abstractmethod
     def reset(self) -> None:
         """Reset decoder state."""
         raise NotImplementedError
 
+    @abc.abstractmethod
     def decode(
-        self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
-    ) -> Tuple[List[int], List[Any]]:
-        """Update decoder state and return the entire decoding.
+        self,
+        emissions: np.ndarray,
+        timestamps: np.ndarray,
+        finish: bool = False,
+    ) -> LabelData:
+        """Online decoding API that updates decoder state and returns the
+        decoded sequence thus far.
 
         Args:
             emissions (`np.ndarray`): Emission probability matrix of shape
@@ -51,9 +61,46 @@ class Decoder:
             timestamps (`np.ndarray`): Timestamps corresponding to emissions
                 of shape (T, ).
         Return:
-            A tuple of decoded labels and corresponding timestamps.
+            A `LabelData` instance with the decoding thus far and their
+                corresponding onset timestamps.
         """
         raise NotImplementedError
+
+    def decode_batch(
+        self,
+        emissions: np.ndarray,
+        emission_lengths: np.ndarray,
+    ) -> list[LabelData]:
+        """Offline decoding API that operates over a batch of emission logits.
+
+        This simply loops over each batch element and calls `decode` in sequence.
+        Override if a more efficient implementation is possible for the specific
+        decoding algorithm.
+
+        Args:
+            emissions (`np.ndarray`): A batch of emission probability matrices
+                of shape (T, N, num_classes).
+            emission_lengths: An array of size N with the valid temporal lengths
+                of each emission matrix in the batch after removal of padding.
+        Return:
+            A list of `LabelData` instances, one per batch item.
+        """
+        assert emissions.ndim == 3  # (T, N, num_classes)
+        assert emission_lengths.ndim == 1
+        N = emissions.shape[1]
+
+        decodings = []
+        for i in range(N):
+            # Unpad emission matrix (T, N, num_classes) for batch entry and decode
+            self.reset()
+            decodings.append(
+                self.decode(
+                    emissions=emissions[: emission_lengths[i], i],
+                    timestamps=np.arange(emission_lengths[i]),
+                )
+            )
+
+        return decodings
 
 
 @dataclass
@@ -62,13 +109,16 @@ class CTCGreedyDecoder(Decoder):
         self.reset()
 
     def reset(self) -> None:
-        self.decoding: List[int] = []
-        self.timestamps: List[Any] = []
+        self.decoding: list[int] = []
+        self.timestamps: list[Any] = []
         self.prev_label = self._charset.null_class
 
     def decode(
-        self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
-    ) -> Tuple[List[int], List[Any]]:
+        self,
+        emissions: np.ndarray,
+        timestamps: np.ndarray,
+        finish: bool = False,
+    ) -> LabelData:
         assert emissions.ndim == 2  # (T, num_classes)
         assert emissions.shape[1] == self._charset.num_classes
         assert len(emissions) == len(timestamps)
@@ -79,7 +129,11 @@ class CTCGreedyDecoder(Decoder):
                 self.timestamps.append(timestamp)
             self.prev_label = label
 
-        return self.decoding, self.timestamps
+        return LabelData.from_labels(
+            labels=self.decoding,
+            timestamps=self.timestamps,
+            _charset=self._charset,
+        )
 
 
 @dataclass
@@ -131,9 +185,9 @@ class TrieNode:
     """
 
     value: Any
-    parent: Optional["TrieNode"] = None
+    parent: TrieNode | None = None
 
-    def child(self, value: Any) -> "TrieNode":
+    def child(self, value: Any) -> TrieNode:
         return self.__class__(value=value, parent=self)
 
     @property
@@ -141,7 +195,7 @@ class TrieNode:
         """Sequence of values on the path from root to this node."""
         # Iterate to avoid hitting max recursion depth
         values = []
-        node: Optional[TrieNode] = self
+        node: TrieNode | None = self
         while node is not None:
             values.append(node.value)
             node = node.parent
@@ -189,12 +243,12 @@ class BeamState:
     """
 
     label_node: TrieNode
-    lm_node: Optional[TrieNode] = None
+    lm_node: TrieNode | None = None
     p_b: float = -np.inf
     p_nb: float = -np.inf
-    _hash: InitVar[Optional[hashlib._Hash]] = None
+    _hash: InitVar[hashlib._Hash | None] = None
 
-    def __post_init__(self, _hash: Optional[hashlib._Hash]) -> None:
+    def __post_init__(self, _hash: hashlib._Hash | None) -> None:
         # Hash object for efficiently keying the decoded prefix into a dict
         # independent of the length of the decoding / number of timesteps.
         if _hash is None:
@@ -204,7 +258,7 @@ class BeamState:
             self.hash_ = _hash
 
     @classmethod
-    def init(cls, blank_label: int, lm: Optional[kenlm.Model] = None) -> "BeamState":
+    def init(cls, blank_label: int, lm: kenlm.Model | None = None) -> BeamState:
         """Initialize a new BeamState with empty sequence (CTC blank label),
         probability of 1 for ending in blank and 0 for non-blank.
 
@@ -237,7 +291,7 @@ class BeamState:
     @property
     def label(self) -> int:
         """Last label corresponding to this decoding state."""
-        return self.label_node.value[0]
+        return int(self.label_node.value[0])
 
     @property
     def timestamp(self) -> Any:
@@ -245,13 +299,13 @@ class BeamState:
         return self.label_node.value[1]
 
     @property
-    def decoding(self) -> List[int]:
+    def decoding(self) -> list[int]:
         """Sequence of decoded labels in the path leading to this beam state,
         ignoring the blank label at the trie root."""
         return [value[0] for value in self.label_node.values][1:]
 
     @property
-    def timestamps(self) -> List[Any]:
+    def timestamps(self) -> list[Any]:
         """Sequence of onset timestamps corresponding to the decoded labels
         in the path leading to this beam state."""
         return [value[1] for value in self.label_node.values][1:]
@@ -264,7 +318,7 @@ class BeamState:
         return self.lm_node.value[0]
 
     @property
-    def lm_states(self) -> List[kenlm.State]:
+    def lm_states(self) -> list[kenlm.State]:
         """Sequence of LM states in the path leading to this beam state."""
         if self.lm_node is None:
             raise RuntimeError("Did you forget to call `init()` with lm?")
@@ -275,16 +329,16 @@ class BeamState:
         """LM score corresponding to this beam node."""
         if self.lm_node is None:
             raise RuntimeError("Did you forget to call `init()` with lm?")
-        return self.lm_node.value[1]
+        return float(self.lm_node.value[1])
 
     @property
-    def lm_scores(self) -> List[kenlm.State]:
+    def lm_scores(self) -> list[kenlm.State]:
         """Sequence of LM scores in the path leading to this beam state."""
         if self.lm_node is None:
             raise RuntimeError("Did you forget to call `init()` with lm?")
         return [value[1] for value in self.lm_node.values]
 
-    def hash(self, next_label: Optional[int] = None) -> hashlib._Hash:
+    def hash(self, next_label: int | None = None) -> hashlib._Hash:
         """`hashlib._Hash` object of the sequence of decoded labels in the path
         leading to this beam state for efficiently keying into a dict.
 
@@ -359,18 +413,18 @@ class CTCBeamDecoder(Decoder):
 
     beam_size: int = 50
     max_labels_per_timestep: int = -1
-    lm_path: Optional[str] = None
+    lm_path: str | None = None
     lm_weight: float = 2.0
     insertion_bonus: float = 2.0
-    delete_key: Optional[str] = "Key.backspace"
+    delete_key: str | None = "Key.backspace"
 
     def __post_init__(self) -> None:
         # Initialize language model if provided
-        self.lm: Optional[kenlm.Model] = None
+        self.lm: kenlm.Model | None = None
         if self.lm_path is not None:
             self.lm = kenlm.Model(self.lm_path)
 
-            # KenLM state correponding to beginning-of-sentence token <s>, but
+            # KenLM state corresponding to beginning-of-sentence token <s>, but
             # actually meaning beginning-of-word (BOW) in our usage.
             self.lm_state_bow = kenlm.State()
             self.lm.BeginSentenceWrite(self.lm_state_bow)
@@ -385,7 +439,7 @@ class CTCBeamDecoder(Decoder):
             # and not the trigram '<s><unk></s>'.
             self.oov_score = self.lm.score(self.OOV, bos=False, eos=False)
 
-        self.delete_label: Optional[int] = None
+        self.delete_label: int | None = None
         if self.delete_key is not None:
             self.delete_label = self._charset.key_to_label(self.delete_key)
 
@@ -398,13 +452,16 @@ class CTCBeamDecoder(Decoder):
     def is_delete_label(self, label: int) -> bool:
         return self.delete_label is not None and label == self.delete_label
 
-    def get_best_decodings(self, k: int = 5) -> List[Tuple[Any, Any]]:
+    def get_best_decodings(self, k: int = 5) -> list[tuple[Any, Any]]:
         # self.beam is already sorted
         return [(b.decoding, b.timestamps) for b in self.beam[:k]]
 
     def decode(
-        self, emissions: np.ndarray, timestamps: np.ndarray, finish: bool = False
-    ) -> Tuple[List[int], List[Any]]:
+        self,
+        emissions: np.ndarray,
+        timestamps: np.ndarray,
+        finish: bool = False,
+    ) -> LabelData:
         assert emissions.ndim == 2  # (T, num_classes)
         assert emissions.shape[1] == self._charset.num_classes
         assert len(emissions) == len(timestamps)
@@ -417,7 +474,7 @@ class CTCBeamDecoder(Decoder):
 
         for t in range(len(emissions)):
             # Dict to store the next set of candidate beams
-            next_beam: Dict[Any, BeamState] = {}
+            next_beam: dict[Any, BeamState] = {}
 
             for prev in self.beam:  # Loop over current candidates
                 # CTC blank or repeat scenario
@@ -457,9 +514,13 @@ class CTCBeamDecoder(Decoder):
         if finish:
             self.finish()
 
-        return self.beam[0].decoding, self.beam[0].timestamps
+        return LabelData.from_labels(
+            labels=self.beam[0].decoding,
+            timestamps=self.beam[0].timestamps,
+            _charset=self._charset,
+        )
 
-    def finish(self) -> Tuple[List[int], List[Any]]:
+    def finish(self) -> LabelData:
         """To be called at the end of the sequence to finish any pending
         LM states by adding end-of-word </s> tokens."""
         if not self.lm:
@@ -478,14 +539,19 @@ class CTCBeamDecoder(Decoder):
             state.p_nb += p_lm
 
         self.beam = sorted(self.beam, key=lambda x: x.p_total, reverse=True)
-        return self.beam[0].decoding, self.beam[0].timestamps
+
+        return LabelData.from_labels(
+            labels=self.beam[0].decoding,
+            timestamps=self.beam[0].timestamps,
+            _charset=self._charset,
+        )
 
     def next_state(
         self,
         prev_state: BeamState,
-        label: Optional[int] = None,
-        timestamp: Optional[Any] = None,
-        cache: Optional[Dict[Any, BeamState]] = None,
+        label: int | None = None,
+        timestamp: Any | None = None,
+        cache: dict[Any, BeamState] | None = None,
     ) -> BeamState:
         """Returns the next BeamState by extending `prev_state` with `label`
         and applying LM as appropriate.
@@ -536,8 +602,10 @@ class CTCBeamDecoder(Decoder):
         return next_state
 
     def apply_lm(
-        self, prev_lm_state: kenlm.State, label: int
-    ) -> Tuple[kenlm.State, float]:
+        self,
+        prev_lm_state: kenlm.State,
+        label: int,
+    ) -> tuple[kenlm.State, float]:
         """Takes in KenLM state and a token label, and returns a tuple of the
         next KenLM state on applying the token as well as the LM score.
 
