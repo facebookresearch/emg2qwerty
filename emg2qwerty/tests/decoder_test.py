@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
@@ -12,20 +12,90 @@ import kenlm
 import numpy as np
 import pytest
 import scipy.special
-from hypothesis import given
-from hypothesis import strategies as st
 
 from emg2qwerty.charset import CharacterSet, charset
-from emg2qwerty.decoder import BeamState, CTCBeamDecoder, logsumexp
+from emg2qwerty.data import LabelData
+from emg2qwerty.decoder import BeamState, CTCBeamDecoder, CTCGreedyDecoder, logsumexp
+from hypothesis import given, strategies as st
 
 
 @given(xs=st.lists(st.floats(max_value=10, allow_infinity=True), min_size=1))
-def test_logsumexp(xs):
+def test_logsumexp(xs: list[float]):
     actual = logsumexp(*xs)
     expected = scipy.special.logsumexp(xs)
     absdiff = abs(actual - expected)
     # Equality check is for the -inf case as absdiff will be NaN
     assert actual == expected or absdiff < 1e-6
+
+
+@pytest.mark.parametrize(
+    "_input, expected",
+    [
+        # \b for blank
+        ("\b", ""),
+        ("\b\b\b\b", ""),
+        ("hello", "helo"),
+        ("hh\b\beeell\bloo", "hello"),
+    ],
+)
+def test_greedy_decoder(_input: str, expected: str):
+    """Test CTCGreedyDecoder basics."""
+    _charset = charset()
+    decoder = CTCGreedyDecoder(_charset=_charset)
+
+    T = len(_input)
+    emissions = np.zeros((T, _charset.num_classes))
+    for t, key in enumerate(_input):
+        label = _charset.null_class if key == "\b" else _charset.key_to_label(key)
+        emissions[t, label] = 1
+
+    # Test `decode` API.
+    decoding = decoder.decode(emissions=emissions, timestamps=np.arange(T))
+    assert decoding.text == expected
+    assert len(decoding.text) == len(decoding.timestamps)
+
+    # Test `decode_batch` API with single-item batch.
+    decodings = decoder.decode_batch(
+        emissions=np.expand_dims(emissions, axis=1),
+        emission_lengths=np.array([T]),
+    )
+    assert len(decodings) == 1
+    assert decodings[0] == decoding
+
+
+@pytest.mark.parametrize(
+    "batch",
+    [
+        # \b for blank
+        [
+            # (input, expected)
+            ("\b", ""),
+            ("\b\b\b\b", ""),
+            ("hello", "helo"),
+            ("hh\b\beeell\bloo", "hello"),
+        ],
+    ],
+)
+def test_greedy_decoder_batch(batch: list[tuple[str, str]]):
+    """Test CTCGreedyDecoder.decode_batch() API for batched decoding."""
+    _charset = charset()
+    decoder = CTCGreedyDecoder(_charset=_charset)
+
+    N = len(batch)
+    inputs = [_input for _input, _ in batch]
+    expected = [_expected for _, _expected in batch]
+    emission_lengths = np.array([len(_input) for _input in inputs])
+    T = emission_lengths.max()
+    emissions = np.zeros((T, N, _charset.num_classes))
+
+    for n, _input in enumerate(inputs):
+        for t, key in enumerate(_input):
+            label = _charset.null_class if key == "\b" else _charset.key_to_label(key)
+            emissions[t, n, label] = 1
+
+    decodings = decoder.decode_batch(emissions, emission_lengths)
+    assert len(decodings) == N
+    assert [decoding.text for decoding in decodings] == expected
 
 
 def test_beamstate_no_lm():
@@ -146,7 +216,7 @@ def test_beamstate_multiple_paths():
     path1 = "abbbbbb"
     path2 = "aaaaaab"
 
-    def _get_final_beam_state(path: str):
+    def _get_final_beam_state(path: str) -> BeamState:
         labels = _charset.str_to_labels(path)
 
         prev_label = blank_label
@@ -207,7 +277,7 @@ def test_timestamps():
     path1 = "abb"
     path2 = "aab"
 
-    def _decode(paths, beam_size):
+    def _decode(paths: list[str], beam_size: int) -> LabelData:
         T = max(len(path) for path in paths)
 
         emissions = np.full((T, _charset.num_classes), fill_value=1e-10)
@@ -218,24 +288,19 @@ def test_timestamps():
 
         decoder.beam_size = beam_size
         decoder.reset()
-        decoded_labels, timestamps = decoder.decode(
-            emissions=emissions, timestamps=np.arange(T)
-        )
-
-        decoded_str = _charset.labels_to_str(decoded_labels)
-        return decoded_str, timestamps
+        return decoder.decode(emissions=emissions, timestamps=np.arange(T))
 
     # Scenario 1: path1 has higher prob and path2 gets kicked out.
     # Token 'b' should have onset timestamp corresponding to path1.
-    decoding, timestamps = _decode([path1], beam_size=1)
-    assert decoding == "ab"
-    assert timestamps == [0, 1]
+    decoding = _decode([path1], beam_size=1)
+    assert decoding.text == "ab"
+    assert list(decoding.timestamps) == [0, 1]
 
     # Scenario 2: path2 has higher prob and path1 gets kicked out.
     # Token 'b' should have onset timestamp corresponding to path2.
-    decoding, timestamps = _decode([path2], beam_size=1)
-    assert decoding == "ab"
-    assert timestamps == [0, 2]
+    decoding = _decode([path2], beam_size=1)
+    assert decoding.text == "ab"
+    assert list(decoding.timestamps) == [0, 2]
 
 
 @given(
@@ -243,7 +308,7 @@ def test_timestamps():
     lm_weight=st.sampled_from([0.0, 0.5, 1.0]),
     insertion_bonus=st.sampled_from([0.0, 0.5, 1.0]),
 )
-def test_lm_score(num_deletes, lm_weight, insertion_bonus):
+def test_lm_score(num_deletes: int, lm_weight: float, insertion_bonus: float):
     """Test CTCBeamDecoder delete handling. Total lm score for a word
     should be the same irrespective of deletes."""
     _charset = charset()
@@ -277,6 +342,7 @@ def test_lm_score(num_deletes, lm_weight, insertion_bonus):
 
     # Compute LM score from decoder
     decoder = CTCBeamDecoder(
+        _charset=_charset,
         lm_path=str(lm_path),
         lm_weight=lm_weight,
         insertion_bonus=insertion_bonus,

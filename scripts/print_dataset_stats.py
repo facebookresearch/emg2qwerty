@@ -1,8 +1,13 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+
+"""
+Script to print statistics about the emg2qwerty dataset by loading its
+associated metadata.csv file.
+"""
 
 from pathlib import Path
 
@@ -32,7 +37,7 @@ def print_dataset_stats(metadata_df: pd.DataFrame):
     print("Dataset Summary:")
     print(f"Num users = {num_users}")
     print(f"Num sessions = {num_sessions}")
-    print(f"Total duration = {total_duration} hours")
+    print(f"Total duration = {total_duration:.2f} hours")
     print(f"Total keystrokes = {total_keystrokes}")
     print(f"Total prompts = {total_prompts}")
     print("\n---------------\n")

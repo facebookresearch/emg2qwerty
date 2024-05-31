@@ -1,11 +1,12 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Any
 
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -16,7 +17,7 @@ def instantiate_optimizer_and_scheduler(
     params: Iterator[nn.Parameter],
     optimizer_config: DictConfig,
     lr_scheduler_config: DictConfig,
-):
+) -> dict[str, Any]:
     optimizer = instantiate(optimizer_config, params)
     scheduler = instantiate(lr_scheduler_config.scheduler, optimizer)
     lr_scheduler = instantiate(lr_scheduler_config, scheduler=scheduler)
@@ -26,16 +27,16 @@ def instantiate_optimizer_and_scheduler(
     }
 
 
-def get_last_checkpoint(checkpoint_dir: Path) -> Optional[Path]:
+def get_last_checkpoint(checkpoint_dir: Path) -> Path | None:
     checkpoints = list(checkpoint_dir.glob("*.ckpt"))
     if not checkpoints:
         return None
-    return sorted(checkpoints, key=lambda p: p.stat().st_mtime)[-1]
+    return max(checkpoints, key=lambda p: p.stat().st_mtime)
 
 
 def cpus_per_task(gpus_per_node: int, tasks_per_node: int, num_workers: int) -> int:
     """Number of CPUs to request per task per node taking into account
-    the number of gpus and dataloading workers."""
+    the number of GPUs and dataloading workers."""
     gpus_per_task = gpus_per_node // tasks_per_node
     if gpus_per_task <= 0:
         return num_workers + 1

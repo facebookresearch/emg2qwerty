@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
@@ -7,258 +7,23 @@
 import logging
 import os
 import pprint
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 import hydra
-import numpy as np
 import pytorch_lightning as pl
-import torch
-from hydra.utils import get_original_cwd, instantiate
-from omegaconf import DictConfig, ListConfig, OmegaConf
-from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader
 
 from emg2qwerty import transforms, utils
-from emg2qwerty.charset import charset
-from emg2qwerty.data import WindowedEmgDataset
-from emg2qwerty.metrics import CharacterErrorRate
-from emg2qwerty.modules import (
-    MultiBandRotationInvariantMLP,
-    SpectrogramNorm,
-    TDSConvEncoder,
-)
 from emg2qwerty.transforms import Transform
+from hydra.utils import get_original_cwd, instantiate
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 
 log = logging.getLogger(__name__)
 
 
-class WindowedEmgDataModule(pl.LightningDataModule):
-    def __init__(
-        self,
-        window_length: int,
-        padding: Tuple[int, int],
-        batch_size: int,
-        num_workers: int,
-        train_sessions: Sequence[Path],
-        val_sessions: Sequence[Path],
-        test_sessions: Sequence[Path],
-    ) -> None:
-        super().__init__()
-
-        self.window_length = window_length
-        self.padding = padding
-
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-
-        self.train_sessions = train_sessions
-        self.val_sessions = val_sessions
-        self.test_sessions = test_sessions
-
-    def setup(self, stage: Optional[str] = None) -> None:
-        self.train_dataset = ConcatDataset(
-            [
-                WindowedEmgDataset(
-                    hdf5_path,
-                    transform=self._train_transforms,
-                    window_length=self.window_length,
-                    padding=self.padding,
-                    jitter=True,
-                )
-                for hdf5_path in self.train_sessions
-            ]
-        )
-        self.val_dataset = ConcatDataset(
-            [
-                WindowedEmgDataset(
-                    hdf5_path,
-                    transform=self._val_transforms,
-                    window_length=self.window_length,
-                    padding=self.padding,
-                    jitter=False,
-                )
-                for hdf5_path in self.val_sessions
-            ]
-        )
-        self.test_dataset = ConcatDataset(
-            [
-                WindowedEmgDataset(
-                    hdf5_path,
-                    transform=self._test_transforms,
-                    # Feed the entire session at once without windowing/padding
-                    # at test time for more realism
-                    window_length=None,
-                    padding=(0, 0),
-                    jitter=False,
-                )
-                for hdf5_path in self.test_sessions
-            ]
-        )
-
-    def train_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.train_dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            collate_fn=WindowedEmgDataset.collate,
-            pin_memory=True,
-            shuffle=True,
-        )
-
-    def val_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            collate_fn=WindowedEmgDataset.collate,
-            pin_memory=True,
-            shuffle=False,
-        )
-
-    def test_dataloader(self) -> DataLoader:
-        # Test dataset does not involve windowing and entire sessions are
-        # fed at once. Limit batch size to 1 to fit within GPU memory and
-        # avoid any influence of padding (while collating multiple batch items)
-        # in test scores.
-        return DataLoader(
-            self.test_dataset,
-            batch_size=1,
-            num_workers=self.num_workers,
-            collate_fn=WindowedEmgDataset.collate,
-            pin_memory=True,
-            shuffle=False,
-        )
-
-
-class TDSConvCTCModule(pl.LightningModule):
-    def __init__(
-        self,
-        in_features: int,
-        mlp_features: Sequence[int],
-        block_channels: Sequence[int],
-        kernel_width: int,
-        optimizer: DictConfig,
-        lr_scheduler: DictConfig,
-        decoder: DictConfig,
-    ) -> None:
-        super().__init__()
-        self.save_hyperparameters()
-
-        # Constants for readability
-        num_bands = 2
-        electrode_channels = 16
-        num_features = num_bands * mlp_features[-1]
-
-        # Model
-        self.spec_norm = SpectrogramNorm(channels=num_bands * electrode_channels)
-        self.rotation_invariant_mlp = MultiBandRotationInvariantMLP(
-            in_features=in_features,
-            mlp_features=mlp_features,
-            num_bands=num_bands,
-        )
-        self.conv_encoder = TDSConvEncoder(
-            num_features=num_features,
-            block_channels=block_channels,
-            kernel_width=kernel_width,
-        )
-        self.linear = nn.Linear(num_features, charset().num_classes)
-        self.log_softmax = nn.LogSoftmax(dim=-1)
-
-        # Criterion
-        self.ctc_loss = nn.CTCLoss(blank=charset().null_class)
-
-        # Metric
-        self.cer = CharacterErrorRate()
-
-        # Decoder
-        self.decoder = instantiate(decoder)
-
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = inputs  # (T, N, bands=2, electrode_channels=16, freq)
-        x = self.spec_norm(x)  # (T, N, bands=2, C=16, freq)
-        x = self.rotation_invariant_mlp(x)  # (T, N, bands=2, mlp_features[-1])
-        x = x.flatten(start_dim=2)  # (T, N, num_features)
-        x = self.conv_encoder(x)  # (T, N, num_features)
-        x = self.linear(x)  # (T, N, num_classes)
-        return self.log_softmax(x)  # (T, N, num_classes)
-
-    def _step(
-        self, phase: str, batch: Mapping[str, torch.Tensor], *args, **kwargs
-    ) -> torch.Tensor:
-        inputs = batch["inputs"]
-        targets = batch["targets"]
-        input_lengths = batch["input_lengths"]
-        target_lengths = batch["target_lengths"]
-        N = len(input_lengths)  # batch_size
-
-        emissions = self.forward(inputs)
-
-        # Shrink input lengths by an amount equivalent to the
-        # conv encoder's temporal receptive field to compute output
-        # activation lengths for CTCLoss
-        T_diff = inputs.shape[0] - emissions.shape[0]
-        emission_lengths = input_lengths - T_diff
-
-        loss = self.ctc_loss(
-            log_probs=emissions,  # (T, N, num_classes)
-            targets=targets.transpose(0, 1),  # (T, N) -> (N, T)
-            input_lengths=emission_lengths,  # (N,)
-            target_lengths=target_lengths,  # (N,)
-        )
-
-        # Decode emissions and update CER metric
-        emissions = emissions.detach().cpu().numpy()
-        emission_lengths = emission_lengths.detach().cpu().numpy()
-        for i in range(N):
-            # Unpad emission matrix for batch entry and perform CTC decoding.
-            # emissions: (T, N, num_classes)
-            self.decoder.reset()
-            pred_labels, _ = self.decoder.decode(
-                emissions=emissions[: emission_lengths[i], i],
-                timestamps=np.arange(emission_lengths[i]),
-            )
-
-            # Unpad target labels for batch entry. targets: (T, N)
-            target_labels = targets[: target_lengths[i], i]
-
-            self.cer.update(pred_labels, target_labels)
-
-        self.log(f"{phase}_loss", loss, sync_dist=True)
-        return loss
-
-    def _epoch_end(self, phase: str, outputs: Sequence[Any]) -> None:
-        self.log(f"{phase}_CER", self.cer.compute(), sync_dist=True)
-        self.cer.reset()
-
-    def training_step(self, *args, **kwargs) -> torch.Tensor:
-        return self._step("train", *args, **kwargs)
-
-    def validation_step(self, *args, **kwargs) -> torch.Tensor:
-        return self._step("val", *args, **kwargs)
-
-    def test_step(self, *args, **kwargs) -> torch.Tensor:
-        return self._step("test", *args, **kwargs)
-
-    def training_epoch_end(self, outputs: Sequence[Any]) -> None:
-        self._epoch_end("train", outputs)
-
-    def validation_epoch_end(self, outputs: Sequence[Any]) -> None:
-        self._epoch_end("val", outputs)
-
-    def test_epoch_end(self, outputs: Sequence[Any]) -> None:
-        self._epoch_end("test", outputs)
-
-    def configure_optimizers(self):
-        return utils.instantiate_optimizer_and_scheduler(
-            self.parameters(),
-            optimizer_config=self.hparams.optimizer,
-            lr_scheduler_config=self.hparams.lr_scheduler,
-        )
-
-
-@hydra.main(config_path="../config", config_name="base")
+@hydra.main(version_base=None, config_path="../config", config_name="base")
 def main(config: DictConfig):
     log.info(f"\nConfig:\n{OmegaConf.to_yaml(config)}")
 
@@ -276,14 +41,17 @@ def main(config: DictConfig):
     # (see `pl_worker_init_fn()`).
     pl.seed_everything(config.seed, workers=True)
 
-    # Dataset session paths
-    def _full_paths(root: str, dataset: ListConfig) -> List[Path]:
+    # Helper to instantiate full paths for dataset sessions
+    def _full_session_paths(dataset: ListConfig) -> list[Path]:
         sessions = [session["session"] for session in dataset]
-        return [Path(root).joinpath(f"{session}.hdf5") for session in sessions]
+        return [
+            Path(config.dataset.root).joinpath(f"{session}.hdf5")
+            for session in sessions
+        ]
 
-    train_sessions = _full_paths(config.dataset.root, config.dataset.train)
-    val_sessions = _full_paths(config.dataset.root, config.dataset.val)
-    test_sessions = _full_paths(config.dataset.root, config.dataset.test)
+    # Helper to instantiate transforms
+    def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
+        return transforms.Compose([instantiate(cfg) for cfg in configs])
 
     # Instantiate LightningModule
     log.info(f"Instantiating LightningModule {config.module}")
@@ -295,7 +63,7 @@ def main(config: DictConfig):
         _recursive_=False,
     )
     if config.checkpoint is not None:
-        log.info(f"Loading from checkpoint {config.checkpoint}")
+        log.info(f"Loading module from checkpoint {config.checkpoint}")
         module = module.load_from_checkpoint(
             config.checkpoint,
             optimizer=config.optimizer,
@@ -309,36 +77,35 @@ def main(config: DictConfig):
         config.datamodule,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
-        train_sessions=train_sessions,
-        val_sessions=val_sessions,
-        test_sessions=test_sessions,
+        train_sessions=_full_session_paths(config.dataset.train),
+        val_sessions=_full_session_paths(config.dataset.val),
+        test_sessions=_full_session_paths(config.dataset.test),
+        train_transform=_build_transform(config.transforms.train),
+        val_transform=_build_transform(config.transforms.val),
+        test_transform=_build_transform(config.transforms.test),
+        _convert_="object",
     )
-
-    # Instantiate transforms
-    def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
-        return transforms.Compose([instantiate(cfg) for cfg in configs])
-
-    datamodule.train_transforms = _build_transform(config.transforms.train)
-    datamodule.val_transforms = _build_transform(config.transforms.val)
-    datamodule.test_transforms = _build_transform(config.transforms.test)
 
     # Instantiate callbacks
     callback_configs = config.get("callbacks", [])
     callbacks = [instantiate(cfg) for cfg in callback_configs]
 
     # Initialize trainer
-    checkpoint_dir = Path.cwd().joinpath("checkpoints")
-    resume_from_checkpoint = utils.get_last_checkpoint(checkpoint_dir)
     trainer = pl.Trainer(
         **config.trainer,
         callbacks=callbacks,
-        resume_from_checkpoint=resume_from_checkpoint,
     )
 
     # Train
     if config.train:
-        trainer.fit(module, datamodule)
+        checkpoint_dir = Path.cwd().joinpath("checkpoints")
+        resume_from_checkpoint = utils.get_last_checkpoint(checkpoint_dir)
+        if resume_from_checkpoint is not None:
+            log.info(f"Resuming training from checkpoint {resume_from_checkpoint}")
 
+        trainer.fit(module, datamodule, ckpt_path=resume_from_checkpoint)
+
+    # TODO (vish): explicitly load best checkpoint here?
     # Validate and test on the trained model or the provided checkpoint
     val_metrics = trainer.validate(module, datamodule)
     test_metrics = trainer.test(module, datamodule)

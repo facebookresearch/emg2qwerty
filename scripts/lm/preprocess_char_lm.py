@@ -1,14 +1,16 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and its affiliates.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-# Script to preprocess a raw text corpus before feeding to kenlm for
-# building a character-level n-gram language model using lmplz.
-#
-# Vocabulary is limited to lower-case alphabets only, and the
-# generated n-grams do not span word boundaries.
+"""
+Script to preprocess a raw text corpus before feeding to kenlm for
+building a character-level n-gram language model using lmplz binary.
+
+LM vocabulary is limited to lower-case alphabets only, and the
+generated n-grams do not span word boundaries.
+"""
 
 import sys
 
@@ -18,17 +20,11 @@ import nltk
 from emg2qwerty.charset import charset
 
 
-LM_VOCABULARY = set(
-    [
-        charset().unicode_to_key(c)
-        for c in charset().allowed_unicodes
-        if chr(c).isalpha()
-    ]
-)
+LM_VOCABULARY = {c for c in charset().allowed_chars if c.isalpha()}
 
 
 def word_in_vocabulary(word: str) -> bool:
-    return all([c in LM_VOCABULARY for c in word])
+    return all(c in LM_VOCABULARY for c in word)
 
 
 def process_word(word: str) -> None:
