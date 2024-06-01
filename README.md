@@ -8,24 +8,21 @@ A dataset of Surface electromyography (sEMG) recordings while typing on a QWERTY
 
 ## Setup
 
-**Update:** As of July 2022, the URL below does not work. Follow the instructions in <https://www.internalfb.com/intern/wiki/RL/RL-CTRL/FRL-CTRL_Engineering_Overview/RIS/CTRL-FAIR_Collaboration_Guide/> to access this dataset on the FAIR cluster.
-
 ```shell
-# Download the dataset
-# TODO (vish): Update dataset filename
-wget https://fb-ctrl-oss.s3.amazonaws.com/emg2qwerty/emg2qwerty-data-2021-08.tar.gz
-tar -xvzf emg2qwerty-data-2021-08.tar.gz
-
-# Make sure you have [git-lfs installed](https://git-lfs.github.com/) (for pre-trained models)
+# Install [git-lfs](https://git-lfs.github.com/) (for pretrained checkpoints)
 git lfs install
 
-git clone git@github.com:fairinternal/emg2qwerty.git && cd emg2qwerty/
+# Clone the repo, setup environment, and install local package
+git clone git@github.com:fairinternal/emg2qwerty.git ~/emg2qwerty
+cd ~/emg2qwerty
 conda env create -f environment.yml
 pip install -e .
 
-# Symlink the dataset directory
+# Download the dataset, extract, and symlink to ~/emg2qwerty/data
 # TODO (vish): Update dataset filename
-ln -s ~/emg2qwerty-data-2021-08 data
+cd ~ && wget https://fb-ctrl-oss.s3.amazonaws.com/emg2qwerty/emg2qwerty-data-2021-08.tar.gz
+tar -xvzf emg2qwerty-data-2021-08.tar.gz
+ln -s ~/emg2qwerty-data-2021-08 ~/emg2qwerty/data
 ```
 
 ## Data
@@ -92,7 +89,7 @@ python -m emg2qwerty.train \
   user=user0 \
   train=False trainer.accelerator=cpu \
   decoder=ctc_greedy \
-  checkpoint="${HOME}/emg2qwerty/models/user0.ckpt" \
+  checkpoint="${HOME}/emg2qwerty/models/personalized_finetuned/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   --multirun
 ```
@@ -104,7 +101,7 @@ python -m emg2qwerty.train \
   user=user0 \
   train=False trainer.accelerator=cpu \
   decoder=ctc_beam \
-  checkpoint="${HOME}/emg2qwerty/models/user0.ckpt" \
+  checkpoint="${HOME}/emg2qwerty/models/personalized_finetuned/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   --multirun
 ```
