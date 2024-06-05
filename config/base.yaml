@@ -21,11 +21,12 @@ trainer:
   devices: 1
   num_nodes: 1
   max_epochs: 150
+  default_root_dir: ${hydra:runtime.output_dir}
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-    dirpath: checkpoints
+    dirpath: ${hydra:runtime.output_dir}/checkpoints
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     save_last: True
@@ -39,7 +40,7 @@ hydra:
     dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
     dir: ${hydra.run.dir}
-    subdir: ${hydra.job.num}_${hydra.job.override_dirname}/seed=${seed}
+    subdir: job${hydra.job.num}_${hydra.job.override_dirname}
   output_subdir: hydra_configs
   job:
     name: emg2qwerty
@@ -48,5 +49,4 @@ hydra:
         exclude_keys:
           - checkpoint
           - cluster
-          - seed
           - trainer.accelerator

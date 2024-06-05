@@ -86,27 +86,27 @@ Greedy decoding:
 
 ```shell
 python -m emg2qwerty.train \
-  user=user0 \
+  user="glob(user*)" \
+  checkpoint="${HOME}/emg2qwerty/models/personalized-finetuned/\${user}.ckpt" \
   train=False trainer.accelerator=cpu \
   decoder=ctc_greedy \
-  checkpoint="${HOME}/emg2qwerty/models/personalized_finetuned/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   --multirun
 ```
 
-Beam-search decoding with 6-gram language model:
+Beam-search decoding with 6-gram character-level language model:
 
 ```shell
 python -m emg2qwerty.train \
-  user=user0 \
+  user="glob(user*)" \
+  checkpoint="${HOME}/emg2qwerty/models/personalized-finetuned/\${user}.ckpt" \
   train=False trainer.accelerator=cpu \
   decoder=ctc_beam \
-  checkpoint="${HOME}/emg2qwerty/models/personalized_finetuned/user0.ckpt" \
   hydra.launcher.mem_gb=64 \
   --multirun
 ```
 
-The above uses a 6-gram character-level language model trained using kenlm on WikiText-103 raw corpus. To re-build the language model,
+The 6-gram character-level language model, used by the first-pass beam-search decoder above, is generated from [WikiText-103 raw dataset](https://huggingface.co/datasets/wikitext), and built using [KenLM](https://github.com/kpu/kenlm). The LM is available under `models/lm/`, both in the binary format, and the human-readable [ARPA format](https://cmusphinx.github.io/wiki/arpaformat/). These can be regenerated as follows:
 
 1. Build kenlm from source: <https://github.com/kpu/kenlm#compiling>
 2. Download nltk punkt tokenizer: `python -c "import nltk; nltk.download('punkt')"`
