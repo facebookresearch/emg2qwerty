@@ -43,7 +43,6 @@ dmypy.json
 .hypothesis
 
 # Logs and checkpoints
-*.ckpt
 logs/
 lightning_logs/
 
