@@ -28,13 +28,13 @@ NGRAM_ORDER=$1
 
 SRC_DIR=$(dirname "$0")
 ROOT_DIR="${SRC_DIR}/../.."
-OUT_DIR="${ROOT_DIR}/models"
+OUT_DIR="${ROOT_DIR}/models/lm"
 
 PREPROCESSOR="${SRC_DIR}/preprocess_char_lm.py"
 PREPROCESSED_DATA="wikitext-103-raw-preprocessed.txt"
 
-LM_ARPA="${OUT_DIR}/wikitext-103-${NGRAM_ORDER}-gram-char-lm.arpa"
-LM_BIN="${OUT_DIR}/wikitext-103-${NGRAM_ORDER}-gram-char-lm.bin"
+LM_ARPA="${OUT_DIR}/wikitext-103-${NGRAM_ORDER}gram-charlm.arpa"
+LM_BIN="${OUT_DIR}/wikitext-103-${NGRAM_ORDER}gram-charlm.bin"
 
 export PYTHONPATH="${PYTHONPATH}:${ROOT_DIR}"
 export PATH="${PATH}:~/kenlm/build/bin"
@@ -43,16 +43,20 @@ export PATH="${PATH}:~/kenlm/build/bin"
 # TODO (vish): Update URL
 # https://blog.einstein.ai/the-wikitext-long-term-dependency-language-modeling-dataset/
 if [ ! -d wikitext-103-raw ]; then
-  echo "Downloading wikitext-103 raw character level dataset"
+  echo -e "\n### Downloading WikiText-103 raw character-level dataset ###\n"
   wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip
   unzip wikitext-103-raw-v1.zip
 
-  echo "Preprocessing to ${PREPROCESSED_DATA}"
+  echo -e "\n### Preprocessing WikiText-103 raw to ${PREPROCESSED_DATA} ###\n"
   cat wikitext-103-raw/* | python "${PREPROCESSOR}" > "${PREPROCESSED_DATA}"
 fi
 
 mkdir -p "${OUT_DIR}"
 
-echo -e "\nBuilding ${NGRAM_ORDER}-gram char-LM"
+echo -e "\n### Building ${NGRAM_ORDER}-gram character-level LM from ${PREPROCESSED_DATA} ###\n"
 lmplz -o "${NGRAM_ORDER}" --discount_fallback < "${PREPROCESSED_DATA}" > "${LM_ARPA}"
 build_binary "${LM_ARPA}" "${LM_BIN}"
+
+echo -e "\n### Generated ${NGRAM_ORDER}-gram character-level LM ###\n"
+echo -e "LM ARPA file (human-readable): ${LM_ARPA}"
+echo -e "LM binary file: ${LM_BIN}"

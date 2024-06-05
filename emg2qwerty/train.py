@@ -111,8 +111,8 @@ def main(config: DictConfig):
             trainer.checkpoint_callback.best_model_path
         )
 
-    # Validate and test on the best checkpoint (if training) or on the
-    # specified config.checkpoint (otherwise)
+    # Validate and test on the best checkpoint (if training), or on the
+    # loaded `config.checkpoint` (otherwise)
     val_metrics = trainer.validate(module, datamodule)
     test_metrics = trainer.test(module, datamodule)
 
