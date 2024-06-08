@@ -9,7 +9,6 @@ Script to convert the dataset from HDF5 to BIDS format (pretending it's EEG).
 https://bids-specification.readthedocs.io/en/stable/modality-specific-files/electroencephalography.html.
 """
 
-from concurrent.futures import as_completed, ProcessPoolExecutor
 from pathlib import Path
 
 import click
@@ -114,34 +113,19 @@ def convert_to_bids(
     default=Path(__file__).parents[1].joinpath("bids_data"),
     help="BIDS dataset root directory (defaults to 'bids_data' folder)",
 )
-@click.option(
-    "--max-workers",
-    type=int,
-    default=1,
-    help="Number of workers for parallelism",
-)
-def main(dataset_root: str, bids_root: str, max_workers: int):
-    executor = ProcessPoolExecutor(max_workers=max_workers)
-    futures = []
-
+def main(dataset_root: str, bids_root: str):
     df = pd.read_csv(Path(dataset_root).joinpath("metadata.csv"))
     users = sorted(df["user"].unique())
     for subject_idx, user in enumerate(users):
         sessions = sorted(df[df["user"] == user].session)
-        for session_idx, session in enumerate(sessions):
+        for session_idx, session in enumerate(tqdm.tqdm(sessions)):
             session_path = Path(dataset_root).joinpath(f"{session}.hdf5")
-            futures.append(
-                executor.submit(
-                    convert_to_bids,
-                    subject_idx=subject_idx,
-                    session_idx=session_idx,
-                    session_path=session_path,
-                    bids_root=bids_root,
-                )
+            convert_to_bids(
+                subject_idx=subject_idx,
+                session_idx=session_idx,
+                session_path=session_path,
+                bids_root=bids_root,
             )
-
-    for _ in tqdm.tqdm(as_completed(futures), total=len(futures)):
-        pass
 
 
 if __name__ == "__main__":
