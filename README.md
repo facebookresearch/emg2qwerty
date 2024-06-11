@@ -3,7 +3,7 @@
 A dataset of Surface electromyography (sEMG) recordings while typing on a QWERTY keyboard with ground-truth, benchmarks and baselines.
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/172884/131009650-a8e96814-7ed6-4ba2-b995-a9f7a39c858c.png" alt="EMG segment" height="80%" width="80%">
+  <img src="https://user-images.githubusercontent.com/172884/131009650-a8e96814-7ed6-4ba2-b995-a9f7a39c858c.png" alt="sEMG segment" height="80%" width="80%">
 </p>
 
 ## Setup
@@ -13,13 +13,12 @@ A dataset of Surface electromyography (sEMG) recordings while typing on a QWERTY
 git lfs install
 
 # Clone the repo, setup environment, and install local package
-git clone git@github.com:fairinternal/emg2qwerty.git ~/emg2qwerty
+git clone git@github.com:facebookresearch/emg2qwerty.git ~/emg2qwerty
 cd ~/emg2qwerty
 conda env create -f environment.yml
 pip install -e .
 
 # Download the dataset, extract, and symlink to ~/emg2qwerty/data
-# TODO (vish): Update dataset filename
 cd ~ && wget https://fb-ctrl-oss.s3.amazonaws.com/emg2qwerty/emg2qwerty-data-2021-08.tar.gz
 tar -xvzf emg2qwerty-data-2021-08.tar.gz
 ln -s ~/emg2qwerty-data-2021-08 ~/emg2qwerty/data
@@ -27,7 +26,7 @@ ln -s ~/emg2qwerty-data-2021-08 ~/emg2qwerty/data
 
 ## Data
 
-The dataset consists of 1,136 files in total - 1,135 session files spanning 108 users and 346 hours of recording, and one `metadata.csv` file. Each session file is in a simple HDF5 format and includes the left and right EMG signal data, prompted text, keylogger ground-truth, and their corresponding timestamps. `emg2qwerty.data.EMGSessionData` offers a programmatic read-only interface into the HDF5 session files.
+The dataset consists of 1,136 files in total - 1,135 session files spanning 108 users and 346 hours of recording, and one `metadata.csv` file. Each session file is in a simple HDF5 format and includes the left and right sEMG signal data, prompted text, keylogger ground-truth, and their corresponding timestamps. `emg2qwerty.data.EMGSessionData` offers a programmatic read-only interface into the HDF5 session files.
 
 To load the `metadata.csv` file and print dataset statistics,
 
@@ -109,5 +108,4 @@ python -m emg2qwerty.train \
 The 6-gram character-level language model, used by the first-pass beam-search decoder above, is generated from [WikiText-103 raw dataset](https://huggingface.co/datasets/wikitext), and built using [KenLM](https://github.com/kpu/kenlm). The LM is available under `models/lm/`, both in the binary format, and the human-readable [ARPA format](https://cmusphinx.github.io/wiki/arpaformat/). These can be regenerated as follows:
 
 1. Build kenlm from source: <https://github.com/kpu/kenlm#compiling>
-2. Download nltk punkt tokenizer: `python -c "import nltk; nltk.download('punkt')"`
-3. Run `./scripts/lm/build_char_lm.sh <ngram_order>`
+2. Run `./scripts/lm/build_char_lm.sh <ngram_order>`
