@@ -1,0 +1,9 @@
+# @package _global_
+decoder:
+  _target_: emg2qwerty.decoder.CTCBeamDecoder
+  beam_size: 50
+  max_labels_per_timestep: 10
+  lm_path: ${hydra:runtime.cwd}/models/lm/wikitext-103-6gram-charlm.bin
+  lm_weight: 2.0
+  insertion_bonus: 2.0
+  delete_key: Key.backspace

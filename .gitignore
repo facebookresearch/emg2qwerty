@@ -1,0 +1,55 @@
+# Swap files
+*.sw*
+
+# Backup files
+*~
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac
+.DS_Store
+
+# Build and Environments
+.condaenv
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+build
+dist
+*.egg-info
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter
+.ipynb_checkpoints
+
+# VSCode
+.vscode
+
+# PyCharm
+.idea
+
+# Hypothesis
+.hypothesis
+
+# Logs and checkpoints
+logs/
+lightning_logs/
+
+# Data
+data
+bids_data
+*.tar.gz
+
+# LM
+wikitext-103-raw*
