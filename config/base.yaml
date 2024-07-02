@@ -33,7 +33,7 @@ callbacks:
     verbose: True
 
 dataset:
-  root: ${hydra:runtime.cwd}/data
+  root: /private/home/nmehlman/data/emg2qwerty-data-2021-08
 
 hydra:
   run:
