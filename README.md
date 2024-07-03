@@ -125,6 +125,10 @@ The 6-gram character-level language model, used by the first-pass beam-search de
 
 Logs are located in the `./logs` directory. They are grouped by date as well as start time. Each log directory contains TensorBoard logging in the `<log_dir>/<exp_name>/lightning_logs`. Model checkpoints are saved in `<log_dir>/<exp_name>/checkpoints`.
 
+## Errors and Issues
+
+You cannot run the personalized model training using the checkpoint in the logging folder due to the '=' charecter in the path (you will get a `mismatched input '=' expecting <EOF>` error). This can be resolved by copying the checkpoint to the `\models` directory.
+
 ## License
 
 emg2qwerty is CC-BY-NC-4.0 licensed, as found in the LICENSE file.
