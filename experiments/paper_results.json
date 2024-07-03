@@ -1,0 +1,20 @@
+{
+    "generic_CER": {
+        "val_no_lm": 55.57,
+        "test_no_lm": 55.38,
+        "val_6_gram": 52.10,
+        "test_6_gram": 51.78
+    },
+    "personalized_random_init_CER": {
+        "val_no_lm": 15.65,
+        "test_no_lm": 15.38,
+        "val_6_gram": 11.03,
+        "test_6_gram": 9.55
+    },
+    "personalized_finetuned_CER": {
+        "val_no_lm": 11.39,
+        "test_no_lm": 11.28,
+        "val_6_gram": 8.31,
+        "test_6_gram": 6.95
+    }
+}
