@@ -77,7 +77,18 @@ python -m emg2qwerty.train \
   --multirun
 ```
 
-If you are using a Slurm cluster, include "cluster=slurm" override in the argument list of above commands to pick up `config/cluster/slurm.yaml`. This overrides the Hydra Launcher to use [Submitit plugin](https://hydra.cc/docs/plugins/submitit_launcher). Refer to Hydra documentation for the list of available launcher plugins if you are not using a Slurm cluster.
+If you are using a Slurm cluster, include "cluster=slurm" override in the argument list of above commands to pick up `config/cluster/slurm. yaml`: 
+
+```shell
+python -m emg2qwerty.train \
+  user=generic \
+  trainer.accelerator=gpu \
+  trainer.devices=8 \
+  cluster=slurm  \
+  --multirun
+```
+
+This overrides the Hydra Launcher to use [Submitit plugin](https://hydra.cc/docs/plugins/submitit_launcher). Refer to Hydra documentation for the list of available launcher plugins if you are not using a Slurm cluster.
 
 ## Testing
 
@@ -109,6 +120,10 @@ The 6-gram character-level language model, used by the first-pass beam-search de
 
 1. Build kenlm from source: <https://github.com/kpu/kenlm#compiling>
 2. Run `./scripts/lm/build_char_lm.sh <ngram_order>`
+
+## Logging
+
+Logs are located in the `./logs` directory. They are grouped by date as well as start time. Each log directory contains TensorBoard logging in the `<log_dir>/<exp_name>/lightning_logs`. Model checkpoints are saved in `<log_dir>/<exp_name>/checkpoints`.
 
 ## License
 
