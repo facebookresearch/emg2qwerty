@@ -53,3 +53,7 @@ bids_data
 
 # LM
 wikitext-103-raw*
+
+# Models
+models/*
+workspace.txt

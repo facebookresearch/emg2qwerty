@@ -45,16 +45,19 @@ def parse_and_save_metrics(submitit_output_path: str, save_path: str = './metric
 
 def parse_and_save_personalized_model_metrics(submitit_root_path: str, save_root: str = '.'):
 
-    for sub_dir in os.listdir(submitit_root_path):
-
-        if not '_' in sub_dir:
-            continue
-
-        user_id = sub_dir.split('_')[-1]
+    for i, sub_dir in enumerate(sorted(os.listdir(submitit_root_path))):
         
         # Get path to out file
         user_dir = os.path.join(submitit_root_path, sub_dir)
-        out_file = [ckpt for ckpt in os.listdir(user_dir) if 'out' in ckpt][0]
+        try:
+            out_file = [ckpt for ckpt in os.listdir(user_dir) if 'out' in ckpt][0]
+        except IndexError: # No log directory found
+            continue
+
+        if '_' in sub_dir: # Personalized model eval
+            user_id = sub_dir.split('_')[-1]
+        else:
+            user_id = i
 
         # Parse metrics for this user
         parse_and_save_metrics(
@@ -68,7 +71,7 @@ if __name__ == "__main__":
 
     import sys
 
-    parse_and_save_personalized_model_metrics(
-        submitit_root_path='/private/home/nmehlman/emg2qwerty/logs/2024-07-03/02/submitit_logs',
-        save_root='/private/home/nmehlman/emg2qwerty/experiments/2024070302'
+    parse_and_save_metrics(
+        submitit_output_path='/private/home/nmehlman/emg2qwerty/logs/2024-07-03/06/submitit_logs/3230238/3230238_0_log.out',
+        save_path='/private/home/nmehlman/emg2qwerty/experiments/2024070306/metrics.json'
     )
