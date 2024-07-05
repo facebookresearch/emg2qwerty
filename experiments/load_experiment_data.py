@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     import sys
 
-    parse_and_save_metrics(
-        submitit_output_path='/private/home/nmehlman/emg2qwerty/logs/2024-07-03/06/submitit_logs/3230238/3230238_0_log.out',
-        save_path='/private/home/nmehlman/emg2qwerty/experiments/2024070306/metrics.json'
+    parse_and_save_personalized_model_metrics(
+        "/private/home/nmehlman/emg2qwerty/logs/2024-07-04/02/submitit_logs",
+        "/private/home/nmehlman/emg2qwerty/experiments/2024070402/metrics"
     )
