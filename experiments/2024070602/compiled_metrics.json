@@ -1,0 +1,14 @@
+{
+   "CTCBeamDecoder": {
+      "mean_val_CER": 46.80519366264343,
+      "mean_test_CER": 46.09501757621765,
+      "val_CER_std": 0.41359831924478374,
+      "test_CER_std": 0.3291957406805937
+   },
+   "CTCGreedyDecoder": {
+      "mean_val_CER": 52.0232159614563,
+      "mean_test_CER": 51.73497533798218,
+      "val_CER_std": 0.3684681841723028,
+      "test_CER_std": 0.3292334504763549
+   }
+}

@@ -1,0 +1,10 @@
+{
+   "test": {
+      "paper_greedy": 15.38,
+      "ours_greedy": 80.77494049072266
+   },
+   "val": {
+      "paper_greedy": 15.65,
+      "ours_greedy": 80.22486686706543
+   }
+}
