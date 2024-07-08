@@ -58,3 +58,4 @@ wikitext-103-raw*
 models/*
 workspace.txt
 workspace.ipynb
+core.*
