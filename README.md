@@ -16,6 +16,7 @@ git lfs install
 git clone git@github.com:facebookresearch/emg2qwerty.git ~/emg2qwerty
 cd ~/emg2qwerty
 conda env create -f environment.yml
+conda activate emg2qwerty
 pip install -e .
 
 # Download the dataset, extract, and symlink to ~/emg2qwerty/data
