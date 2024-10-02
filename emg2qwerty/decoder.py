@@ -29,7 +29,7 @@ def logsumexp(*xs: float) -> float:
     `numpy.ndarray` conversion."""
     x_max = max(xs)
     if x_max == -np.inf:
-        return -np.inf
+        return -float(np.inf)
     return x_max + math.log(sum(math.exp(x - x_max) for x in xs))
 
 
@@ -525,7 +525,11 @@ class CTCBeamDecoder(Decoder):
         LM states by adding end-of-word </s> tokens."""
         if not self.lm:
             # Nothing to do, just return the best decoding
-            return self.beam[0].decoding, self.beam[0].timestamps
+            return LabelData.from_labels(
+                labels=self.beam[0].decoding,
+                timestamps=self.beam[0].timestamps,
+                _charset=self._charset,
+            )
 
         for state in self.beam:
             if state.lm_state == self.lm_state_bow:
@@ -539,7 +543,6 @@ class CTCBeamDecoder(Decoder):
             state.p_nb += p_lm
 
         self.beam = sorted(self.beam, key=lambda x: x.p_total, reverse=True)
-
         return LabelData.from_labels(
             labels=self.beam[0].decoding,
             timestamps=self.beam[0].timestamps,

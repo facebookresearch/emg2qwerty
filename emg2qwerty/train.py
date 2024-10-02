@@ -13,11 +13,11 @@ from typing import Any
 
 import hydra
 import pytorch_lightning as pl
+from hydra.utils import get_original_cwd, instantiate
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from emg2qwerty import transforms, utils
 from emg2qwerty.transforms import Transform
-from hydra.utils import get_original_cwd, instantiate
-from omegaconf import DictConfig, ListConfig, OmegaConf
 
 
 log = logging.getLogger(__name__)

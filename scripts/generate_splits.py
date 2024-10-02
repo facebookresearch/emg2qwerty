@@ -65,7 +65,7 @@ def sample_test_users(df: pd.DataFrame, n: int, seed: int | None = None) -> pd.S
     unique_counts = np.unique(sessions_per_user.values)
 
     # Pick users with the most number of sessions first until we have `n` users
-    test_users = []
+    test_users: list[Any] = []
     for num_sessions in unique_counts[::-1]:
         n_remaining = n - len(test_users)
         if n_remaining <= 0:

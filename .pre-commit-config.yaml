@@ -15,24 +15,24 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/omnilib/ufmt
-    rev: v2.6.0
+    rev: v2.7.3
     hooks:
       - id: ufmt
         additional_dependencies:
-          - black==24.3.0
-          - usort==1.0.5
+          - black==24.8.0
+          - usort==1.0.8
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+    rev: 7.1.1
     hooks:
       - id: flake8
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v1.11.2
     hooks:
       - id: mypy
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.8
+    rev: v0.6.8
     hooks:
       - id: ruff

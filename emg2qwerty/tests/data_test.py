@@ -6,6 +6,7 @@
 
 
 import pytest
+
 from emg2qwerty.data import LabelData
 
 

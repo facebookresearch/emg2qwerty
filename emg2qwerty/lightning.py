@@ -11,6 +11,11 @@ from typing import Any, ClassVar
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from hydra.utils import instantiate
+from omegaconf import DictConfig
+from torch import nn
+from torch.utils.data import ConcatDataset, DataLoader
+from torchmetrics import MetricCollection
 
 from emg2qwerty import utils
 from emg2qwerty.charset import charset
@@ -22,11 +27,6 @@ from emg2qwerty.modules import (
     TDSConvEncoder,
 )
 from emg2qwerty.transforms import Transform
-from hydra.utils import instantiate
-from omegaconf import DictConfig
-from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader
-from torchmetrics import MetricCollection
 
 
 class WindowedEMGDataModule(pl.LightningDataModule):

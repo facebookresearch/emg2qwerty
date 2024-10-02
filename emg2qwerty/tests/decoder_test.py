@@ -12,11 +12,11 @@ import kenlm
 import numpy as np
 import pytest
 import scipy.special
+from hypothesis import given, strategies as st
 
 from emg2qwerty.charset import CharacterSet, charset
 from emg2qwerty.data import LabelData
 from emg2qwerty.decoder import BeamState, CTCBeamDecoder, CTCGreedyDecoder, logsumexp
-from hypothesis import given, strategies as st
 
 
 @given(xs=st.lists(st.floats(max_value=10, allow_infinity=True), min_size=1))
@@ -52,7 +52,7 @@ def test_greedy_decoder(_input: str, expected: str):
     # Test `decode` API.
     decoding = decoder.decode(emissions=emissions, timestamps=np.arange(T))
     assert decoding.text == expected
-    assert len(decoding.text) == len(decoding.timestamps)
+    assert len(decoding.text) == len(decoding.timestamps)  # type: ignore
 
     # Test `decode_batch` API with single-item batch.
     decodings = decoder.decode_batch(
@@ -294,13 +294,13 @@ def test_timestamps():
     # Token 'b' should have onset timestamp corresponding to path1.
     decoding = _decode([path1], beam_size=1)
     assert decoding.text == "ab"
-    assert list(decoding.timestamps) == [0, 1]
+    assert list(decoding.timestamps) == [0, 1]  # type: ignore
 
     # Scenario 2: path2 has higher prob and path1 gets kicked out.
     # Token 'b' should have onset timestamp corresponding to path2.
     decoding = _decode([path2], beam_size=1)
     assert decoding.text == "ab"
-    assert list(decoding.timestamps) == [0, 2]
+    assert list(decoding.timestamps) == [0, 2]  # type: ignore
 
 
 @given(

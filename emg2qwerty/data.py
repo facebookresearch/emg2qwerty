@@ -15,10 +15,10 @@ from typing import Any, ClassVar
 import h5py
 import numpy as np
 import torch
+from torch import nn
 
 from emg2qwerty.charset import CharacterSet, charset
 from emg2qwerty.transforms import ToTensor, Transform
-from torch import nn
 
 
 @dataclass
@@ -101,7 +101,7 @@ class EMGSessionData:
     def __len__(self) -> int:
         return len(self.timeseries)
 
-    def __getitem__(self, key: slice) -> np.ndarray:
+    def __getitem__(self, key: slice | str) -> np.ndarray:
         return self.timeseries[key]
 
     def slice(self, start_t: float = -np.inf, end_t: float = np.inf) -> np.ndarray:
@@ -148,35 +148,35 @@ class EMGSessionData:
     @property
     def session_name(self) -> str:
         """Unique name of the session."""
-        return self.metadata[self.SESSION_NAME]
+        return self.metadata[self.SESSION_NAME]  # type: ignore
 
     @property
     def user(self) -> str:
         """Unique ID of the user this session corresponds to."""
-        return self.metadata[self.USER]
+        return self.metadata[self.USER]  # type: ignore
 
     @property
     def condition(self) -> str:
-        return self.metadata[self.CONDITION]
+        return self.metadata[self.CONDITION]  # type: ignore
 
     @property
     def duration_mins(self) -> float:
         """The duration of the EMG session in minutes."""
-        return self.metadata[self.DURATION_MINS]
+        return self.metadata[self.DURATION_MINS]  # type: ignore
 
     @property
     def keystrokes(self) -> list[dict[str, Any]]:
         """Sequence of keys recorded by the keylogger during the
         data-collection session along with the press and release timestamps
         for each key."""
-        return self.metadata[self.KEYSTROKES]
+        return self.metadata[self.KEYSTROKES]  # type: ignore
 
     @property
     def prompts(self) -> list[dict[str, Any]]:
         """Sequence of sentences prompted to the user during the
         data-collection session along with the start and end timestamps
         for each prompt."""
-        return self.metadata[self.PROMPTS]
+        return self.metadata[self.PROMPTS]  # type: ignore
 
     def __str__(self) -> str:
         """Human-readable string representation for display."""
@@ -313,7 +313,7 @@ class LabelData:
                 label_data += cls.from_prompt(
                     prompt,
                     enforce_newline=enforce_newline,
-                    _charset=charset,
+                    _charset=_charset,
                 )
         return label_data
 
@@ -403,7 +403,9 @@ class LabelData:
     def __len__(self) -> int:
         return len(self.text)
 
-    def __eq__(self, other: LabelData) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, LabelData):
+            return NotImplemented
         return self.text == other.text
 
     def __add__(self, other: LabelData) -> LabelData:
@@ -472,7 +474,7 @@ class WindowedEMGDataset(torch.utils.data.Dataset):
         assert self.left_padding >= 0 and self.right_padding >= 0
 
     def __len__(self) -> int:
-        return max(self.session_length - self.window_length, 0) // self.stride + 1
+        return int(max(self.session_length - self.window_length, 0) // self.stride + 1)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         # Lazy init `EMGSessionData` per dataloading worker

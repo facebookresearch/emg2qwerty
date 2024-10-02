@@ -33,14 +33,17 @@ def get_mne_raw(session_path: Path) -> mne.io.Raw:
     ch_names = [f"emg{i}" for i in range(16)]
     ch_names = [f"{ch}_left" for ch in ch_names] + [f"{ch}_right" for ch in ch_names]
     sfreq = 2000.0  # Hz
-    data = np.concatenate((session["emg_left"], session["emg_right"]), axis=1)
+    data = np.concatenate(
+        (session[EMGSessionData.EMG_LEFT], session[EMGSessionData.EMG_RIGHT]), axis=1
+    )
     info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types="eeg")
     raw = mne.io.RawArray(data.T, info)
 
     # Deal with annotations for keystrokes
-    idx = np.searchsorted(session["time"], label_data.timestamps)
+    timestamps = session.timestamps
+    idx = np.searchsorted(timestamps, label_data.timestamps)
     # Fix idx as certain keys arrive after the final timestamp
-    idx[idx >= len(session["time"])] = len(session["time"]) - 1
+    idx[idx >= len(timestamps)] = len(timestamps) - 1
 
     keys = charset().str_to_keys(label_data.text)
     # Prefix with "key" to distinguish from prompts
@@ -54,11 +57,11 @@ def get_mne_raw(session_path: Path) -> mne.io.Raw:
     # Deal with annotations for prompts
     prompts = pd.DataFrame(session.prompts)
     prompts = prompts.query("name == 'text_prompt'")
-    idx_start = np.searchsorted(session["time"], prompts.start)
-    idx_end = np.searchsorted(session["time"], prompts.end)
+    idx_start = np.searchsorted(timestamps, prompts.start)
+    idx_end = np.searchsorted(timestamps, prompts.end)
     # Fix idx as certain keys arrive after the final timestamp
-    idx_start[idx_start >= len(session["time"])] = len(session["time"]) - 1
-    idx_end[idx_end >= len(session["time"])] = len(session["time"]) - 1
+    idx_start[idx_start >= len(timestamps)] = len(timestamps) - 1
+    idx_end[idx_end >= len(timestamps)] = len(timestamps) - 1
     onset = raw.times[idx_start]
     duration = raw.times[idx_end] - raw.times[idx_start]
     description = prompts.payload.apply(pd.Series).text.str.replace("⏎", "\\n").values
