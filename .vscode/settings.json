@@ -11,7 +11,7 @@
     "[python]": {
       "editor.defaultFormatter": "charliermarsh.ruff",
       "editor.codeActionsOnSave": {
-        "source.fixAll": "always"
+        "source.organizeImports": "always"
       }
     },
     "python.analysis.typeCheckingMode": "off",

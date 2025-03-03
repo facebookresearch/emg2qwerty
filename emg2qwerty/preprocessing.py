@@ -255,9 +255,78 @@ class DataPreprocessing:
 
         return results
 
+    def _create_channel_groups(
+        self, corr_matrix: pd.DataFrame, n_channels: int, target_channels: int
+    ) -> List[List[int]]:
+        """
+        Create channel groups to reduce to target number of channels.
+
+        Args:
+            corr_matrix: Correlation matrix between channels
+            n_channels: Number of original channels
+            target_channels: Target number of output channels
+
+        Returns:
+            List of channel groups (each group is a list of channel indices)
+        """
+        # If target is greater than or equal to original, no reduction needed
+        if target_channels >= n_channels:
+            return [[i + 1] for i in range(n_channels)]
+
+        # Initialize each channel as its own group
+        groups = [{i + 1} for i in range(n_channels)]
+
+        # Create a list of all correlation pairs
+        corr_pairs = []
+        for i in range(n_channels):
+            for j in range(i + 1, n_channels):
+                ch1 = corr_matrix.index[i]
+                ch2 = corr_matrix.columns[j]
+                corr_val = abs(corr_matrix.iloc[i, j])
+                ch1_idx = int(ch1.replace("Right_Ch", "").replace("Left_Ch", ""))
+                ch2_idx = int(ch2.replace("Right_Ch", "").replace("Left_Ch", ""))
+                corr_pairs.append((ch1_idx, ch2_idx, corr_val))
+
+        # Sort by correlation strength (highest first)
+        corr_pairs.sort(key=lambda x: x[2], reverse=True)
+
+        # Merge groups until we reach the target number
+        while len(groups) > target_channels:
+            # Find the pair with highest correlation where channels are in different groups
+            for ch1_idx, ch2_idx, corr_val in corr_pairs:
+                # Find which groups these channels belong to
+                group1_idx = None
+                group2_idx = None
+
+                for i, group in enumerate(groups):
+                    if ch1_idx in group:
+                        group1_idx = i
+                    if ch2_idx in group:
+                        group2_idx = i
+
+                    if group1_idx is not None and group2_idx is not None:
+                        break
+
+                # If channels are in different groups, merge them
+                if group1_idx != group2_idx:
+                    # Merge the groups
+                    groups[group1_idx].update(groups[group2_idx])
+                    # Remove the second group
+                    groups.pop(group2_idx)
+                    break
+
+            # If we couldn't find any pairs to merge, break out
+            # This shouldn't happen if the correlation matrix is well-formed
+            else:
+                break
+
+        # Convert sets to sorted lists for consistent output
+        return [sorted(list(group)) for group in groups]
+
     def reduce_emg_channels(
         self,
         emg_data: List[Dict],
+        out_channels: int,
         correlation_threshold: float = 0.8,
         method: str = "pearson",
         reduction_method: str = "pca",
@@ -267,6 +336,7 @@ class DataPreprocessing:
 
         Args:
             emg_data: Dataset containing EMG recordings
+            out_channels: Target number of output channels per hand
             correlation_threshold: Threshold above which channels are considered redundant
             method: Correlation method ('pearson', 'spearman', or 'kendall')
             reduction_method: Method to combine channels ('pca', 'average', or 'weighted_average')
@@ -314,53 +384,20 @@ class DataPreprocessing:
                 [[entry["emg_right"][i] for i in range(n_channels_right)] for entry in emg_data]
             )
 
-            # Group correlated channels
-            channel_groups_right: list[set[int]] = []
-            remaining_channels: set[int] = set(range(1, n_channels_right + 1))
+            # Get correlation matrix
+            right_corr = corr_results["right"]["correlation_matrix"]
 
-            # Sort correlations by strength (highest first)
-            high_corr_pairs = sorted(
-                corr_results["right"]["high_correlation_pairs"],
-                key=lambda x: abs(x[2]),
-                reverse=True,
+            # Create channel groups based on target out_channels
+            channel_groups_right = self._create_channel_groups(
+                right_corr, n_channels_right, out_channels
             )
-
-            # Group highly correlated channels
-            for ch1, ch2, corr_val in high_corr_pairs:
-                ch1_idx = int(ch1.replace("Right_Ch", ""))
-                ch2_idx = int(ch2.replace("Right_Ch", ""))
-
-                # Find if either channel is already in a group
-                group_found = False
-                for group in channel_groups_right:
-                    if ch1_idx in group or ch2_idx in group:
-                        # Add the other channel to the existing group
-                        if ch1_idx not in group:
-                            group.add(ch1_idx)
-                            remaining_channels.discard(ch1_idx)
-                        if ch2_idx not in group:
-                            group.add(ch2_idx)
-                            remaining_channels.discard(ch2_idx)
-                        group_found = True
-                        break
-
-                # If neither channel is in a group, create a new group
-                if not group_found:
-                    new_group = {ch1_idx, ch2_idx}
-                    channel_groups_right.append(new_group)
-                    remaining_channels.discard(ch1_idx)
-                    remaining_channels.discard(ch2_idx)
-
-            # Add remaining ungrouped channels as individual groups
-            for ch in remaining_channels:
-                channel_groups_right.append({ch})
 
             # Store the channel groups
             reduction_info["right"]["channel_groups"] = [
                 sorted(list(group)) for group in channel_groups_right
             ]
 
-        # Process left hand channels (similar to right hand)
+        # Process left hand channels
         if "left" in corr_results:
             n_channels_left = emg_data[0]["emg_left"].shape[0]
             reduction_info["left"]["original_channels"] = n_channels_left
@@ -370,46 +407,13 @@ class DataPreprocessing:
                 [[entry["emg_left"][i] for i in range(n_channels_left)] for entry in emg_data]
             )
 
-            # Group correlated channels
-            channel_groups_left: list[set[int]] = []
-            remaining_channels = set(range(1, n_channels_left + 1))
+            # Get correlation matrix
+            left_corr = corr_results["left"]["correlation_matrix"]
 
-            # Sort correlations by strength (highest first)
-            high_corr_pairs = sorted(
-                corr_results["left"]["high_correlation_pairs"],
-                key=lambda x: abs(x[2]),
-                reverse=True,
+            # Create channel groups based on target out_channels
+            channel_groups_left = self._create_channel_groups(
+                left_corr, n_channels_left, out_channels
             )
-
-            # Group highly correlated channels
-            for ch1, ch2, corr_val in high_corr_pairs:
-                ch1_idx = int(ch1.replace("Left_Ch", ""))
-                ch2_idx = int(ch2.replace("Left_Ch", ""))
-
-                # Find if either channel is already in a group
-                group_found = False
-                for group in channel_groups_left:
-                    if ch1_idx in group or ch2_idx in group:
-                        # Add the other channel to the existing group
-                        if ch1_idx not in group:
-                            group.add(ch1_idx)
-                            remaining_channels.discard(ch1_idx)
-                        if ch2_idx not in group:
-                            group.add(ch2_idx)
-                            remaining_channels.discard(ch2_idx)
-                        group_found = True
-                        break
-
-                # If neither channel is in a group, create a new group
-                if not group_found:
-                    new_group = {ch1_idx, ch2_idx}
-                    channel_groups_left.append(new_group)
-                    remaining_channels.discard(ch1_idx)
-                    remaining_channels.discard(ch2_idx)
-
-            # Add remaining ungrouped channels as individual groups
-            for ch in remaining_channels:
-                channel_groups_left.append({ch})
 
             # Store the channel groups
             reduction_info["left"]["channel_groups"] = [
@@ -509,7 +513,7 @@ class DataPreprocessing:
             if len(group) > 1:
                 print(f"  Group {i + 1}: Channels {group} → Combined Channel {i + 1}")
             else:
-                print(f"  Group {i + 1}: Channel {list(group)[0]} → Preserved as Channel {i + 1}")
+                print(f"  Group {i + 1}: Channel {group[0]} → Preserved as Channel {i + 1}")
 
         print(
             f"\nLeft hand: {n_channels_left} → "
@@ -520,7 +524,7 @@ class DataPreprocessing:
             if len(group) > 1:
                 print(f"  Group {i + 1}: Channels {group} → Combined Channel {i + 1}")
             else:
-                print(f"  Group {i + 1}: Channel {list(group)[0]} → Preserved as Channel {i + 1}")
+                print(f"  Group {i + 1}: Channel {group[0]} → Preserved as Channel {i + 1}")
 
         return reduced_emg_data, reduction_info
 
@@ -616,12 +620,27 @@ app = typer.Typer()
 @app.command()
 def process_file(
     file_path: Path = typer.Argument(..., help="Path to the HDF5 file to process"),
+    out_channels: int = typer.Option(8, help="Number of output channels per hand"),
     output_dir: Optional[Path] = typer.Option(None, help="Output directory for processed files"),
     correlation_threshold: float = typer.Option(0.8, help="Threshold for channel correlation"),
     method: str = typer.Option("pearson", help="Correlation method: 'pearson' or 'spearman'"),
     reduction_method: str = typer.Option("pca", help="Reduction method: 'pca' or 'mean'"),
 ):
     """Process a single EMG file to reduce channels."""
+    # Echo all settings for user confirmation
+    typer.echo("\nChannel Reduction Settings:")
+    typer.echo(f"  Input File: {file_path}")
+    typer.echo(f"  Output Directory: {output_dir if output_dir else f'{file_path.name}_processed'}")
+    typer.echo(f"  Output Channels per Hand: {out_channels}")
+    typer.echo(f"  Correlation Threshold: {correlation_threshold}")
+    typer.echo(f"  Correlation Method: {method}")
+    typer.echo(f"  Reduction Method: {reduction_method}")
+
+    # Wait for user confirmation
+    if not typer.confirm("\nProceed with these settings?", default=True):
+        typer.echo("Operation cancelled by user")
+        raise typer.Exit(code=0)
+
     if not file_path.exists():
         typer.echo(f"Error: File {file_path} does not exist")
         raise typer.Exit(code=1)
@@ -662,6 +681,7 @@ def process_file(
         # Reduce channels
         reduced_data, reduction_info = preprocessor.reduce_emg_channels(
             emg_data,
+            out_channels=out_channels,
             correlation_threshold=correlation_threshold,
             method=method,
             reduction_method=reduction_method,
@@ -684,6 +704,7 @@ def process_file(
 @app.command()
 def process_directory(
     directory: Path = typer.Argument(..., help="Directory containing HDF5 files to process"),
+    out_channels: int = typer.Option(8, help="Number of output channels per hand"),
     output_dir: Optional[Path] = typer.Option(None, help="Output directory for processed files"),
     correlation_threshold: float = typer.Option(0.8, help="Threshold for channel correlation"),
     method: str = typer.Option("pearson", help="Correlation method: 'pearson' or 'spearman'"),
@@ -693,6 +714,21 @@ def process_directory(
     ),
 ):
     """Process all HDF5 files in a directory to reduce channels."""
+    # Echo all settings for user confirmation
+    typer.echo("\nChannel Reduction Settings:")
+    typer.echo(f"  Input Directory: {directory}")
+    typer.echo(f"  Output Directory: {output_dir if output_dir else f'{directory.name}_processed'}")
+    typer.echo(f"  Output Channels per Hand: {out_channels}")
+    typer.echo(f"  Correlation Threshold: {correlation_threshold}")
+    typer.echo(f"  Correlation Method: {method}")
+    typer.echo(f"  Reduction Method: {reduction_method}")
+    typer.echo(f"  Batch Size: {batch_size}")
+
+    # Wait for user confirmation
+    if not typer.confirm("\nProceed with these settings?", default=True):
+        typer.echo("Operation cancelled by user")
+        raise typer.Exit(code=0)
+
     if not directory.exists() or not directory.is_dir():
         typer.echo(f"Error: Directory {directory} does not exist or is not a directory")
         raise typer.Exit(code=1)
@@ -714,6 +750,9 @@ def process_directory(
 
     # Process files in batches to manage memory
     success_count = 0
+
+    # Import gc here to ensure it's available
+    import gc
 
     for i in range(0, len(hdf5_files), batch_size):
         batch = hdf5_files[i : i + batch_size]
@@ -737,13 +776,17 @@ def process_directory(
             try:
                 # Load the data from the HDF5 file
                 dataset = None
-                with h5py.File(str(file_path), "r") as f:
-                    if "emg2qwerty/timeseries" not in f:
-                        typer.echo(f"Dataset emg2qwerty/timeseries not found in {file_path}")
-                        continue
+                try:
+                    with h5py.File(str(file_path), "r") as f:
+                        if "emg2qwerty/timeseries" not in f:
+                            typer.echo(f"Dataset emg2qwerty/timeseries not found in {file_path}")
+                            continue
 
-                    # Load data in chunks to reduce memory usage
-                    dataset = f["emg2qwerty/timeseries"][...]
+                        # Load data in chunks to reduce memory usage
+                        dataset = f["emg2qwerty/timeseries"][...]
+                except Exception as e:
+                    typer.echo(f"Error opening file {file_path}: {e}")
+                    continue
 
                 if dataset is None:
                     typer.echo(f"Failed to read dataset from {file_path}")
@@ -754,20 +797,19 @@ def process_directory(
                 for entry in dataset:
                     emg_entry = {
                         "time": entry["time"],
-                        "emg_right": entry["emg_right"],
-                        "emg_left": entry["emg_left"],
+                        "emg_right": entry["emg_right"].copy(),  # Use copy to avoid references
+                        "emg_left": entry["emg_left"].copy(),  # Use copy to avoid references
                     }
                     emg_data.append(emg_entry)
 
                 # Clear dataset from memory
                 del dataset
-                import gc
-
                 gc.collect()
 
                 # Reduce channels
                 reduced_data, reduction_info = preprocessor.reduce_emg_channels(
                     emg_data,
+                    out_channels=out_channels,
                     correlation_threshold=correlation_threshold,
                     method=method,
                     reduction_method=reduction_method,
@@ -789,6 +831,9 @@ def process_directory(
                 del reduction_info
                 gc.collect()
 
+                # Close any matplotlib figures that might be open
+                plt.close("all")
+
                 success_count += 1
 
             except Exception as e:
@@ -797,10 +842,11 @@ def process_directory(
 
                 typer.echo(traceback.format_exc())
 
+                # Make sure to close any open plots even on error
+                plt.close("all")
+
         # Force garbage collection after each batch
         del preprocessor
-        import gc
-
         gc.collect()
 
     typer.echo(f"Successfully processed {success_count} out of {len(hdf5_files)} files")

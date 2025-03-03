@@ -163,9 +163,7 @@ class MultiBandRotationInvariantMLP(nn.Module):
         assert inputs.shape[self.stack_dim] == self.num_bands
 
         inputs_per_band = inputs.unbind(self.stack_dim)
-        outputs_per_band = [
-            mlp(_input) for mlp, _input in zip(self.mlps, inputs_per_band)
-        ]
+        outputs_per_band = [mlp(_input) for mlp, _input in zip(self.mlps, inputs_per_band)]
         return torch.stack(outputs_per_band, dim=self.stack_dim)
 
 
@@ -265,9 +263,7 @@ class TDSConvEncoder(nn.Module):
         assert len(block_channels) > 0
         tds_conv_blocks: list[nn.Module] = []
         for channels in block_channels:
-            assert (
-                num_features % channels == 0
-            ), "block_channels must evenly divide num_features"
+            assert num_features % channels == 0, "block_channels must evenly divide num_features"
             tds_conv_blocks.extend(
                 [
                     TDSConv2dBlock(channels, num_features // channels, kernel_width),

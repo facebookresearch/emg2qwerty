@@ -1,7 +1,7 @@
 defaults:
-  - user: generic
+  - user: single_user
   - transforms: log_spectrogram
-  - model: tds_conv_ctc
+  - model: tds_conv_ctc_reduced
   - optimizer: adam
   - lr_scheduler: linear_warmup_cosine_annealing
   - decoder: ctc_greedy
@@ -15,10 +15,10 @@ train: True # Whether to train or only run validation and test
 checkpoint: null # Optional path to checkpoint file
 monitor_metric: val/CER
 monitor_mode: min
-reduced: False
+reduced: True
 
 trainer:
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   num_nodes: 1
   max_epochs: 150

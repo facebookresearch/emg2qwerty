@@ -19,7 +19,6 @@ from omegaconf import DictConfig, ListConfig, OmegaConf
 from emg2qwerty import transforms, utils
 from emg2qwerty.transforms import Transform
 
-
 log = logging.getLogger(__name__)
 
 
@@ -44,10 +43,17 @@ def main(config: DictConfig):
     # Helper to instantiate full paths for dataset sessions
     def _full_session_paths(dataset: ListConfig) -> list[Path]:
         sessions = [session["session"] for session in dataset]
-        return [
-            Path(config.dataset.root).joinpath(f"{session}.hdf5")
-            for session in sessions
-        ]
+        users = [session["user"] for session in dataset]
+        if config.reduced:
+            return [
+                Path(config.dataset.root).joinpath(f"{user}_processed").joinpath(f"{session}.hdf5")
+                for session, user in zip(sessions, users)
+            ]
+        else:
+            return [
+                Path(config.dataset.root).joinpath(f"{user}").joinpath(f"{session}.hdf5")
+                for session, user in zip(sessions, users)
+            ]
 
     # Helper to instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
@@ -107,9 +113,7 @@ def main(config: DictConfig):
         trainer.fit(module, datamodule, ckpt_path=resume_from_checkpoint)
 
         # Load best checkpoint
-        module = module.load_from_checkpoint(
-            trainer.checkpoint_callback.best_model_path
-        )
+        module = module.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
     # Validate and test on the best checkpoint (if training), or on the
     # loaded `config.checkpoint` (otherwise)
