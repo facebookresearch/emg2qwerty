@@ -21,11 +21,7 @@ from emg2qwerty import utils
 from emg2qwerty.charset import charset
 from emg2qwerty.data import LabelData, WindowedEMGDataset
 from emg2qwerty.metrics import CharacterErrorRates
-from emg2qwerty.modules import (
-    MultiBandRotationInvariantMLP,
-    SpectrogramNorm,
-    TDSConvEncoder,
-)
+from emg2qwerty.modules import MultiBandRotationInvariantMLP, SpectrogramNorm, TDSConvEncoder
 from emg2qwerty.transforms import Transform
 
 
@@ -150,6 +146,7 @@ class TDSConvCTCModule(pl.LightningModule):
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
         decoder: DictConfig,
+        multi_scale: bool = False,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
@@ -173,6 +170,7 @@ class TDSConvCTCModule(pl.LightningModule):
                 num_features=num_features,
                 block_channels=block_channels,
                 kernel_width=kernel_width,
+                multi_scale=multi_scale,
             ),
             # (T, N, num_classes)
             nn.Linear(num_features, charset().num_classes),

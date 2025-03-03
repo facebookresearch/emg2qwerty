@@ -255,6 +255,12 @@ class MultiScaleTDSConv2dBlock(nn.Module):
         # Apply multi-scale convolutions
         multi_scale_features = [conv(x) for conv in self.conv2d_branches]
 
+        # Find the minimum time dimension (width) among all features
+        min_time_dim = min(feat.size(3) for feat in multi_scale_features)
+
+        # Trim all features to the minimum time dimension
+        multi_scale_features = [feat[..., :min_time_dim] for feat in multi_scale_features]
+
         # Concatenate along the channel dimension
         x = torch.cat(multi_scale_features, dim=1)
 
