@@ -17,8 +17,8 @@ import mne_bids
 import numpy as np
 import pandas as pd
 import tqdm
-from emg2qwerty.charset import charset
 
+from emg2qwerty.charset import charset
 from emg2qwerty.data import EMGSessionData
 
 mne.set_log_level("WARNING")
