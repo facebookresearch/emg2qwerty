@@ -1,4 +1,5 @@
 # emg2qwerty
+
 [ [`Paper`](https://arxiv.org/abs/2410.20081) ] [ [`Dataset`](https://fb-ctrl-oss.s3.amazonaws.com/emg2qwerty/emg2qwerty-data-2021-08.tar.gz) ] [ [`Blog`](https://ai.meta.com/blog/open-sourcing-surface-electromyography-datasets-neurips-2024/) ] [ [`BibTeX`](#citing-emg2qwerty) ]
 
 A dataset of surface electromyography (sEMG) recordings while touch typing on a QWERTY keyboard with ground-truth, benchmarks and baselines.
@@ -77,6 +78,12 @@ python -m emg2qwerty.train \
   trainer.accelerator=gpu trainer.devices=1 \
   checkpoint="${HOME}/emg2qwerty/models/generic.ckpt" \
   --multirun
+```
+
+Personalized config:
+
+```shell
+python -m emg2qwerty.train --config-name [config] [overrides]
 ```
 
 If you are using a Slurm cluster, include "cluster=slurm" override in the argument list of above commands to pick up `config/cluster/slurm.yaml`. This overrides the Hydra Launcher to use [Submitit plugin](https://hydra.cc/docs/plugins/submitit_launcher). Refer to Hydra documentation for the list of available launcher plugins if you are not using a Slurm cluster.
