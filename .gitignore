@@ -33,9 +33,6 @@ dmypy.json
 # Jupyter
 .ipynb_checkpoints
 
-# VSCode
-.vscode
-
 # PyCharm
 .idea
 

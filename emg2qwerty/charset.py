@@ -14,7 +14,6 @@ from typing import ClassVar
 
 import unidecode
 
-
 UniChar = str  # Unicode character
 KeyChar = str  # pynput keyboard.Key
 
@@ -86,14 +85,14 @@ class CharacterSet:
     UNICHAR_TO_KEY: ClassVar[Mapping[UniChar, KeyChar]] = {
         " ": "Key.space",
         "\r": "Key.enter",
-        "\u21E5": "Key.tab",  # ⇥
-        "\u21E7": "Key.shift",  # ⇧
+        "\u21e5": "Key.tab",  # ⇥
+        "\u21e7": "Key.shift",  # ⇧
         "\u2303": "Key.ctrl",  # ⌃
         "\u2318": "Key.cmd",  # ⌘
-        "\u232B": "Key.backspace",  # ⌫
-        "\u23CE": "Key.enter",  # ⏎
+        "\u232b": "Key.backspace",  # ⌫
+        "\u23ce": "Key.enter",  # ⏎
         "\u2191": "Key.shift_l",  # ↑ -- straight
-        "\u21E1": "Key.shift_r",  # ⇡ -- dotted
+        "\u21e1": "Key.shift_r",  # ⇡ -- dotted
     }
 
     # Map of unsupported chars to their equivalent supported counterparts.
@@ -107,9 +106,7 @@ class CharacterSet:
         "—": "-",
     }
 
-    _key_to_unicode: OrderedDict = field(
-        default_factory=lambda: CharacterSet.KEY_TO_UNICODE
-    )
+    _key_to_unicode: OrderedDict = field(default_factory=lambda: CharacterSet.KEY_TO_UNICODE)
 
     def __post_init__(self) -> None:
         self._unicode_to_key = {v: k for k, v in self._key_to_unicode.items()}

@@ -139,7 +139,6 @@ class WindowedEMGDataModule(pl.LightningDataModule):
 
 class TDSConvCTCModule(pl.LightningModule):
     NUM_BANDS: ClassVar[int] = 2
-    ELECTRODE_CHANNELS: ClassVar[int] = 16
 
     def __init__(
         self,
@@ -147,20 +146,21 @@ class TDSConvCTCModule(pl.LightningModule):
         mlp_features: Sequence[int],
         block_channels: Sequence[int],
         kernel_width: int,
+        electrode_channels: int,
         optimizer: DictConfig,
         lr_scheduler: DictConfig,
         decoder: DictConfig,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
-
+        self.electrode_channels = electrode_channels
         num_features = self.NUM_BANDS * mlp_features[-1]
 
         # Model
         # inputs: (T, N, bands=2, electrode_channels=16, freq)
         self.model = nn.Sequential(
             # (T, N, bands=2, C=16, freq)
-            SpectrogramNorm(channels=self.NUM_BANDS * self.ELECTRODE_CHANNELS),
+            SpectrogramNorm(channels=self.NUM_BANDS * self.electrode_channels),
             # (T, N, bands=2, mlp_features[-1])
             MultiBandRotationInvariantMLP(
                 in_features=in_features,
@@ -197,9 +197,7 @@ class TDSConvCTCModule(pl.LightningModule):
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.model(inputs)
 
-    def _step(
-        self, phase: str, batch: dict[str, torch.Tensor], *args, **kwargs
-    ) -> torch.Tensor:
+    def _step(self, phase: str, batch: dict[str, torch.Tensor], *args, **kwargs) -> torch.Tensor:
         inputs = batch["inputs"]
         targets = batch["targets"]
         input_lengths = batch["input_lengths"]
