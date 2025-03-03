@@ -211,6 +211,68 @@ class TDSConv2dBlock(nn.Module):
         return self.layer_norm(x)  # TNC
 
 
+class MultiScaleTDSConv2dBlock(nn.Module):
+    """A Multi-Scale Time-Depth Separable 2D Convolution Block.
+
+    This extends the standard TDS block by applying multiple parallel
+    convolutions with different kernel sizes to capture various time-scale dependencies.
+
+    Args:
+        channels (int): Number of input and output channels.
+        width (int): Feature width (channels * width = num_features).
+        kernel_widths (list of int): List of kernel sizes for multi-scale convolutions.
+    """
+
+    def __init__(
+        self, channels: int, width: int, kernel_widths: Sequence[int] = (16, 32, 64)
+    ) -> None:
+        super().__init__()
+        self.channels = channels
+        self.width = width
+
+        # Multiple parallel temporal convolutions
+        self.conv2d_branches = nn.ModuleList(
+            [
+                nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=(1, k))
+                for k in kernel_widths
+            ]
+        )
+
+        # 1x1 convolution to merge multi-scale features back to original shape
+        self.merge_conv = nn.Conv2d(
+            in_channels=len(kernel_widths) * channels, out_channels=channels, kernel_size=1
+        )
+
+        self.relu = nn.ReLU()
+        self.layer_norm = nn.LayerNorm(channels * width)
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        T_in, N, C = inputs.shape  # TNC
+
+        # Reshape for 2D convolutions: TNC -> NCT -> NCHW (H=width, W=T)
+        x = inputs.movedim(0, -1).reshape(N, self.channels, self.width, T_in)
+
+        # Apply multi-scale convolutions
+        multi_scale_features = [conv(x) for conv in self.conv2d_branches]
+
+        # Concatenate along the channel dimension
+        x = torch.cat(multi_scale_features, dim=1)
+
+        # Merge features using 1x1 convolution
+        x = self.merge_conv(x)
+        x = self.relu(x)
+
+        # Reshape back: NCHW -> NCT -> TNC
+        x = x.reshape(N, C, -1).movedim(-1, 0)
+
+        # Residual connection (skip connection)
+        T_out = x.shape[0]
+        x = x + inputs[-T_out:]
+
+        # Layer normalization over channels
+        return self.layer_norm(x)  # TNC
+
+
 class TDSFullyConnectedBlock(nn.Module):
     """A fully connected block as per "Sequence-to-Sequence Speech
     Recognition with Time-Depth Separable Convolutions, Hannun et al"
@@ -257,19 +319,30 @@ class TDSConvEncoder(nn.Module):
         num_features: int,
         block_channels: Sequence[int] = (24, 24, 24, 24),
         kernel_width: int = 32,
+        multi_scale: bool = False,
     ) -> None:
         super().__init__()
-
+        self.multi_scale = multi_scale
+        kernel_widths = (kernel_width // 2, kernel_width, kernel_width * 2)
         assert len(block_channels) > 0
         tds_conv_blocks: list[nn.Module] = []
         for channels in block_channels:
             assert num_features % channels == 0, "block_channels must evenly divide num_features"
-            tds_conv_blocks.extend(
-                [
-                    TDSConv2dBlock(channels, num_features // channels, kernel_width),
-                    TDSFullyConnectedBlock(num_features),
-                ]
-            )
+
+            if self.multi_scale:
+                tds_conv_blocks.extend(
+                    [
+                        MultiScaleTDSConv2dBlock(channels, num_features // channels, kernel_widths),
+                        TDSFullyConnectedBlock(num_features),
+                    ]
+                )
+            else:
+                tds_conv_blocks.extend(
+                    [
+                        TDSConv2dBlock(channels, num_features // channels, kernel_width),
+                        TDSFullyConnectedBlock(num_features),
+                    ]
+                )
         self.tds_conv_blocks = nn.Sequential(*tds_conv_blocks)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
