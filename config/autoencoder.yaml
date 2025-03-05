@@ -1,0 +1,61 @@
+defaults:
+  - user: generic
+  - transforms: log_spectrogram # We'll inherit the same transforms as base
+  - cluster: local
+  - _self_
+
+seed: 1501
+batch_size: 32
+num_workers: 4
+train: True
+checkpoint: null
+monitor_metric: val/loss # Changed from CER to loss for autoencoder
+monitor_mode: min
+reduced: False
+
+# Autoencoder specific configurations
+autoencoder:
+  in_channels: 32 # Number of input EMG channels
+  bottleneck_channels: 16 # Number of channels in the bottleneck layer
+  lr: 0.0001 # Learning rate for the autoencoder
+
+# Data module configuration
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 8000 # 4 sec windows for 2kHz EMG
+  padding: [1800, 200] # 900ms past context, 100ms future context
+
+trainer:
+  accelerator: cpu
+  devices: 1
+  num_nodes: 1
+  max_epochs: 150
+  default_root_dir: ${hydra:runtime.output_dir}
+
+callbacks:
+  - _target_: pytorch_lightning.callbacks.LearningRateMonitor
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: ${hydra:runtime.output_dir}/checkpoints
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
+    save_last: True
+    verbose: True
+
+dataset:
+  root: ${hydra:runtime.cwd}/data
+
+hydra:
+  run:
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${hydra.run.dir}
+    subdir: job${hydra.job.num}_${hydra.job.override_dirname}
+  output_subdir: hydra_configs
+  job:
+    name: emg2qwerty
+    config:
+      override_dirname:
+        exclude_keys:
+          - checkpoint
+          - cluster
+          - trainer.accelerator

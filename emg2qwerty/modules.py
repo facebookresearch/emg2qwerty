@@ -353,3 +353,115 @@ class TDSConvEncoder(nn.Module):
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         return self.tds_conv_blocks(inputs)  # (T, N, num_features)
+
+
+class EMGSpecAutoEncoder(nn.Module):
+    """An autoencoder that compresses EMG spectrograms from 32 channels (2 bands × 16 electrodes)
+    to 16 channels and can reconstruct the original.
+
+    Args:
+        in_channels (int): Number of input channels (bands * electrode_channels)
+        bottleneck_channels (int): Number of channels in the bottleneck representation
+        freq_dim (int): Dimension of the frequency bins
+    """
+
+    def __init__(
+        self,
+        in_channels: int = 32,  # 2 bands * 16 electrode channels
+        bottleneck_channels: int = 16,
+        freq_dim: int = 0,  # Will be inferred from input if 0
+    ) -> None:
+        super().__init__()
+        self.in_channels = in_channels
+        self.bottleneck_channels = bottleneck_channels
+        self.freq_dim = freq_dim
+
+        # Encoder: compress from in_channels to bottleneck_channels
+        self.encoder = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Conv2d(32, bottleneck_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(bottleneck_channels),
+            nn.ReLU(),
+        )
+
+        # Decoder: reconstruct from bottleneck_channels to in_channels
+        self.decoder = nn.Sequential(
+            nn.Conv2d(bottleneck_channels, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Conv2d(32, in_channels, kernel_size=3, padding=1),
+        )
+
+    def forward(self, inputs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Args:
+            inputs: Input tensor of shape (T, N, bands, electrode_channels, freq)
+                  or (N, bands * electrode_channels, freq, T)
+
+        Returns:
+            tuple containing:
+                - encoded: Bottleneck representation (T, N, bottleneck_channels, freq)
+                - reconstructed: Reconstructed input (T, N, bands, electrode_channels, freq)
+        """
+        # Determine if we need to reshape
+        if len(inputs.shape) == 5:  # (T, N, bands, electrode_channels, freq)
+            T, N, bands, C, freq = inputs.shape
+            # Reshape to (N, bands*C, freq, T) for 2D convolutions
+            x = inputs.permute(1, 2, 3, 4, 0).reshape(N, bands * C, freq, T)
+            original_shape = inputs.shape
+        elif len(inputs.shape) == 4:  # (N, bands*C, freq, T)
+            N, C, freq, T = inputs.shape
+            x = inputs
+            # Save shape for reshaping back later
+            original_shape = (T, N, 2, C // 2, freq)  # Assuming 2 bands
+        else:
+            raise ValueError(f"Unexpected input shape: {inputs.shape}")
+
+        # Update freq_dim if needed
+        if self.freq_dim == 0:
+            self.freq_dim = freq
+
+        # Encode
+        encoded: torch.Tensor = self.encoder(x)
+
+        # Decode
+        reconstructed: torch.Tensor = self.decoder(encoded)
+
+        # Reshape encoded to (T, N, bottleneck_channels, freq)
+        encoded_reshaped = encoded.reshape(N, self.bottleneck_channels, freq, T).permute(3, 0, 1, 2)
+
+        # Reshape reconstructed back to original shape if needed
+        if len(inputs.shape) == 5:
+            reconstructed = reconstructed.reshape(N, bands, C, freq, T).permute(4, 0, 1, 2, 3)
+        else:
+            reconstructed = reconstructed.reshape(
+                N, original_shape[2], original_shape[3], freq, T
+            ).permute(4, 0, 1, 2, 3)
+
+        return encoded_reshaped, reconstructed
+
+    def encode(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Get only the encoded representation.
+
+        Args:
+            inputs: Input tensor
+
+        Returns:
+            encoded: Bottleneck representation
+        """
+        encoded, _ = self.forward(inputs)
+        return encoded
+
+    def get_reconstruction_loss(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Calculate reconstruction loss for training the autoencoder.
+
+        Args:
+            inputs: Input tensor
+
+        Returns:
+            loss: MSE reconstruction loss
+        """
+        _, reconstructed = self.forward(inputs)
+        return nn.functional.mse_loss(reconstructed, inputs)
