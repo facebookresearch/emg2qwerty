@@ -34,6 +34,14 @@ def main(config: DictConfig):
         python_paths.append(working_dir)
         os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
+    # Create output directory for logs and plots
+    output_dir = Path.cwd().joinpath("outputs")
+    output_dir.mkdir(exist_ok=True)
+
+    # Save config to output directory
+    with open(output_dir.joinpath("config.yaml"), "w") as f:
+        f.write(OmegaConf.to_yaml(config))
+
     # Seed for determinism
     pl.seed_everything(config.seed, workers=True)
 
@@ -92,6 +100,9 @@ def main(config: DictConfig):
     callback_configs = config.get("callbacks", [])
     callbacks = [instantiate(cfg) for cfg in callback_configs]
 
+    # Add CSV logger to save metrics
+    csv_logger = pl.loggers.CSVLogger(save_dir=output_dir, name="logs")
+
     # Initialize trainer
     trainer = pl.Trainer(
         **config.trainer,
@@ -124,6 +135,50 @@ def main(config: DictConfig):
         else None,
     }
     pprint.pprint(results, sort_dicts=False)
+
+    # Save results to file
+    with open(output_dir.joinpath("results.txt"), "w") as f:
+        f.write(pprint.pformat(results, sort_dicts=False))
+
+    # Plot training and validation loss if training was performed
+    if config.train and csv_logger.experiment is not None:
+        try:
+            import matplotlib.pyplot as plt
+            import pandas as pd
+
+            metrics_file = csv_logger.experiment.metrics_file_path
+            if os.path.exists(metrics_file):
+                df = pd.read_csv(metrics_file)
+
+                # Filter for loss metrics
+                train_loss = df.filter(regex=r"train/loss.*$")
+                val_loss = df.filter(regex=r"val/loss.*$")
+
+                if not train_loss.empty or not val_loss.empty:
+                    plt.figure(figsize=(10, 6))
+
+                    if not train_loss.empty:
+                        plt.plot(train_loss.values, label="Training Loss")
+
+                    if not val_loss.empty:
+                        plt.plot(val_loss.values, label="Validation Loss")
+
+                    plt.xlabel("Epoch")
+                    plt.ylabel("Loss")
+                    plt.title("Autoencoder Training and Validation Loss")
+                    plt.legend()
+                    plt.grid(True)
+
+                    # Save the plot
+                    plt.savefig(output_dir.joinpath("loss_plot.png"))
+                    plt.close()
+                    log.info(f"Loss plot saved to {output_dir.joinpath('loss_plot.png')}")
+        except ImportError:
+            log.warning(
+                "Could not generate loss plot. Make sure pandas and matplotlib are installed."
+            )
+        except Exception as e:
+            log.warning(f"Error generating loss plot: {e}")
 
 
 if __name__ == "__main__":
