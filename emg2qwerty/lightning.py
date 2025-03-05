@@ -14,6 +14,7 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch import nn
+from torch.nn import functional as F
 from torch.utils.data import ConcatDataset, DataLoader
 from torchmetrics import MetricCollection
 
@@ -21,7 +22,12 @@ from emg2qwerty import utils
 from emg2qwerty.charset import charset
 from emg2qwerty.data import LabelData, WindowedEMGDataset
 from emg2qwerty.metrics import CharacterErrorRates
-from emg2qwerty.modules import MultiBandRotationInvariantMLP, SpectrogramNorm, TDSConvEncoder
+from emg2qwerty.modules import (
+    EMGSpecAutoEncoder,
+    MultiBandRotationInvariantMLP,
+    SpectrogramNorm,
+    TDSConvEncoder,
+)
 from emg2qwerty.transforms import Transform
 
 
@@ -154,27 +160,37 @@ class TDSConvCTCModule(pl.LightningModule):
         num_features = self.NUM_BANDS * mlp_features[-1]
 
         # Model
+        # (T, N, bands=2, C=16, freq)
+        self.spectrogram_norm = SpectrogramNorm(channels=self.NUM_BANDS * self.electrode_channels)
+        # (T, N, bands=2, mlp_features[-1])
+        self.multi_band_mlp = MultiBandRotationInvariantMLP(
+            in_features=in_features,
+            mlp_features=mlp_features,
+            num_bands=self.NUM_BANDS,
+        )
+        # (T, N, num_features)
+        self.flatten = nn.Flatten(start_dim=2)
+
+        # (T, N, num_features)
+        self.encoder = TDSConvEncoder(
+            num_features=num_features,
+            block_channels=block_channels,
+            kernel_width=kernel_width,
+            multi_scale=multi_scale,
+        )
+        # (T, N, num_classes)
+        self.classifier = nn.Linear(num_features, charset().num_classes)
+        # (T, N, num_classes)
+        self.log_softmax = nn.LogSoftmax(dim=-1)
+
         # inputs: (T, N, bands=2, electrode_channels=16, freq)
         self.model = nn.Sequential(
-            # (T, N, bands=2, C=16, freq)
-            SpectrogramNorm(channels=self.NUM_BANDS * self.electrode_channels),
-            # (T, N, bands=2, mlp_features[-1])
-            MultiBandRotationInvariantMLP(
-                in_features=in_features,
-                mlp_features=mlp_features,
-                num_bands=self.NUM_BANDS,
-            ),
-            # (T, N, num_features)
-            nn.Flatten(start_dim=2),
-            TDSConvEncoder(
-                num_features=num_features,
-                block_channels=block_channels,
-                kernel_width=kernel_width,
-                multi_scale=multi_scale,
-            ),
-            # (T, N, num_classes)
-            nn.Linear(num_features, charset().num_classes),
-            nn.LogSoftmax(dim=-1),
+            self.spectrogram_norm,
+            self.multi_band_mlp,
+            self.flatten,
+            self.encoder,
+            self.classifier,
+            self.log_softmax,
         )
 
         # Criterion
@@ -265,3 +281,62 @@ class TDSConvCTCModule(pl.LightningModule):
             optimizer_config=self.hparams.optimizer,
             lr_scheduler_config=self.hparams.lr_scheduler,
         )
+
+
+class AutoencoderModule(pl.LightningModule):
+    def __init__(self, in_channels=32, bottleneck_channels=16, lr=1e-3):
+        super().__init__()
+        self.save_hyperparameters()
+        self.autoencoder = EMGSpecAutoEncoder(
+            in_channels=in_channels, bottleneck_channels=bottleneck_channels
+        )
+        # Metrics - initialize an empty metric collection
+        metrics = MetricCollection([])
+        self.metrics = nn.ModuleDict(
+            {
+                f"{phase}_metrics": metrics.clone(prefix=f"{phase}/")
+                for phase in ["train", "val", "test"]
+            }
+        )
+
+    def forward(self, x):
+        encoded, reconstructed = self.autoencoder(x)
+        return encoded, reconstructed
+
+    def _step(self, phase: str, batch: dict[str, torch.Tensor], *args, **kwargs) -> torch.Tensor:
+        inputs = batch["inputs"]
+        input_lengths = batch["input_lengths"]
+
+        N = len(input_lengths)  # batch_size
+        _, reconstructed = self.forward(inputs)
+        loss = F.mse_loss(reconstructed, inputs)
+        metrics = self.metrics[f"{phase}_metrics"]
+        metrics.update(loss, N)
+        self.log(f"Autoencoder {phase}/loss", loss, batch_size=N, sync_dist=True)
+        return loss
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
+
+    def _epoch_end(self, phase: str) -> None:
+        metrics = self.metrics[f"{phase}_metrics"]
+        self.log_dict(metrics.compute(), sync_dist=True)
+        metrics.reset()
+
+    def training_step(self, *args, **kwargs) -> torch.Tensor:
+        return self._step("train", *args, **kwargs)
+
+    def validation_step(self, *args, **kwargs) -> torch.Tensor:
+        return self._step("val", *args, **kwargs)
+
+    def test_step(self, *args, **kwargs) -> torch.Tensor:
+        return self._step("test", *args, **kwargs)
+
+    def on_train_epoch_end(self) -> None:
+        self._epoch_end("train")
+
+    def on_validation_epoch_end(self) -> None:
+        self._epoch_end("val")
+
+    def on_test_epoch_end(self) -> None:
+        self._epoch_end("test")
