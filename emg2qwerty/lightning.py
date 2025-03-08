@@ -312,7 +312,7 @@ class AutoencoderModule(pl.LightningModule):
         loss = F.mse_loss(reconstructed, inputs)
         metrics = self.metrics[f"{phase}_metrics"]
         metrics.update(loss, N)
-        self.log(f"Autoencoder {phase}/loss", loss, batch_size=N, sync_dist=True)
+        self.log(f"{phase}/loss", loss, batch_size=N, sync_dist=True)
         return loss
 
     def configure_optimizers(self):

@@ -26,7 +26,7 @@ datamodule:
   padding: [1800, 200] # 900ms past context, 100ms future context
 
 trainer:
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   num_nodes: 1
   max_epochs: 150
@@ -47,11 +47,7 @@ callbacks:
     verbose: True
 
 dataset:
-<<<<<<< Updated upstream
-  root: ${hydra:runtime.cwd}/data
-=======
-  root: ${hydra:runtime.cwd}/mnt/dataset
->>>>>>> Stashed changes
+  root: /mnt/newvolume/dataset
 
 hydra:
   run:
