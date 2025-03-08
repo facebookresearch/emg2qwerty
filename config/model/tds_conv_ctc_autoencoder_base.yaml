@@ -1,11 +1,14 @@
 # @package _global_
 module:
-  _target_: emg2qwerty.lightning.TDSConvCTCModule
-  in_features: 528 # freq * channels = (n_fft // 2 + 1) * 16
+  _target_: emg2qwerty.lightning.TDSConvCTCWithAutoencoderModule
+  in_features: 264 # freq * channels = (n_fft // 2 + 1) * 8
   mlp_features: [384]
   block_channels: [24, 24, 24, 24]
   kernel_width: 32 # Total temporal receptive field of 125 samples given 4 layers
-  electrode_channels: 16
+  electrode_channels: 8
+  autoencoder_checkpoint: path/to/autoencoder/checkpoint.ckpt
+  freeze_encoder: True
+  multi_scale: False
 
 datamodule:
   _target_: emg2qwerty.lightning.WindowedEMGDataModule

@@ -3,7 +3,7 @@ repos:
     rev: v4.6.0
     hooks:
       - id: check-added-large-files
-        exclude: resources/.+
+        exclude: resources/.+|uv\.lock
       - id: check-toml
       - id: detect-aws-credentials
         args: [--allow-missing-credentials]

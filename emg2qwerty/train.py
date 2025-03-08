@@ -94,7 +94,27 @@ def main(config: DictConfig):
 
     # Instantiate callbacks
     callback_configs = config.get("callbacks", [])
-    callbacks = [instantiate(cfg) for cfg in callback_configs]
+    callbacks: list[pl.Callback] = []
+
+    # Extract model name for checkpoint naming
+    model_name = config.model._target_.split(".")[-1]
+    log.info(f"Using model: {model_name}")
+
+    # Process callbacks and customize ModelCheckpoint if present
+    for cfg in callback_configs:
+        if cfg._target_ == "pytorch_lightning.callbacks.ModelCheckpoint":
+            # Customize the ModelCheckpoint callback
+            checkpoint_callback = instantiate(
+                cfg,
+                filename=f"{model_name}"
+                + "-{epoch:02d}-{"
+                + config.monitor_metric.replace("/", "_")
+                + ":.4f}",
+                dirpath=f"{Path.cwd()}/checkpoints/{model_name}",
+            )
+            callbacks.append(checkpoint_callback)
+        else:
+            callbacks.append(instantiate(cfg))
 
     # Initialize trainer
     trainer = pl.Trainer(
