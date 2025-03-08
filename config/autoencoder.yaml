@@ -35,7 +35,7 @@ trainer:
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-    dirpath: ${hydra:runtime.output_dir}/checkpoints
+    dirpath: ${hydra:runtime.output_dir}/autoencoder/checkpoints
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     save_last: True
@@ -51,7 +51,7 @@ dataset:
 
 hydra:
   run:
-    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}/autoencoder
   sweep:
     dir: ${hydra.run.dir}
     subdir: job${hydra.job.num}_${hydra.job.override_dirname}
