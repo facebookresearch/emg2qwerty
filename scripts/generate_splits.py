@@ -30,7 +30,6 @@ import numpy as np
 import pandas as pd
 import yaml
 
-
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
@@ -44,9 +43,7 @@ def filter_users(df: pd.DataFrame, min_sessions: int) -> pd.Series:
     return users
 
 
-def sample_users(
-    df: pd.DataFrame, n: int, min_sessions: int, seed: int | None = None
-) -> pd.Series:
+def sample_users(df: pd.DataFrame, n: int, min_sessions: int, seed: int | None = None) -> pd.Series:
     """Sample `n` users from the given dataset who have at least
     `min_sessions` sessions."""
     users = filter_users(df, min_sessions=min_sessions)
@@ -80,9 +77,7 @@ def sample_test_users(df: pd.DataFrame, n: int, seed: int | None = None) -> pd.S
     return test_users
 
 
-def stratified_sample(
-    df: pd.DataFrame, n: int, seed: int | None = None
-) -> pd.DataFrame:
+def stratified_sample(df: pd.DataFrame, n: int, seed: int | None = None) -> pd.DataFrame:
     """Sample `n` rows per user from `df`."""
     random_state = np.random.RandomState(seed)
     return df.groupby("user", group_keys=False).apply(
@@ -100,9 +95,7 @@ def generate_split(
     """Split `df` into train, val and test partitions satisfying the
     provided per-user constraints."""
     # Filter out users with too few sessions to satisfy constraints
-    min_sessions = (
-        min_train_sessions_per_user + n_val_sessions_per_user + n_test_sessions_per_user
-    )
+    min_sessions = min_train_sessions_per_user + n_val_sessions_per_user + n_test_sessions_per_user
     users = filter_users(df, min_sessions=min_sessions)
     df = df[df.user.isin(users)]
 
@@ -119,9 +112,7 @@ def generate_split(
     return train, val, test
 
 
-def dump_split(
-    user: str, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame
-) -> None:
+def dump_split(user: str, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame) -> None:
     config_dir = Path(__file__).parents[1].joinpath("config")
     path = config_dir.joinpath(f"user/{user}.yaml")
 
@@ -197,6 +188,7 @@ def main(
     n_test_sessions_per_user: int,
     seed: int,
 ):
+    dataset_root = "mnt/dataset"
     df = pd.read_csv(Path(dataset_root).joinpath("metadata.csv"))
     df.quality_check_tags = df.quality_check_tags.apply(yaml.safe_load)
 

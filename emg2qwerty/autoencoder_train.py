@@ -55,10 +55,7 @@ def main(config: DictConfig):
                 for session, user in zip(sessions, users)
             ]
         else:
-            return [
-                Path(config.dataset.root).joinpath(f"{user}").joinpath(f"{session}.hdf5")
-                for session, user in zip(sessions, users)
-            ]
+            return [Path(config.dataset.root).joinpath(f"{session}.hdf5") for session in sessions]
 
     # Helper to instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:

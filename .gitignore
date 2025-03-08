@@ -50,3 +50,12 @@ bids_data
 
 # LM
 wikitext-103-raw*
+<<<<<<< Updated upstream
+=======
+
+# Outputs
+output/
+
+# Dataset
+mnt/
+>>>>>>> Stashed changes

@@ -40,9 +40,18 @@ callbacks:
     mode: ${monitor_mode}
     save_last: True
     verbose: True
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
+    patience: 10
+    verbose: True
 
 dataset:
+<<<<<<< Updated upstream
   root: ${hydra:runtime.cwd}/data
+=======
+  root: ${hydra:runtime.cwd}/mnt/dataset
+>>>>>>> Stashed changes
 
 hydra:
   run:
