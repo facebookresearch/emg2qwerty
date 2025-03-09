@@ -20,7 +20,7 @@ module:
   block_channels: [12, 12, 12, 12] # Reduced from [24,24,24,24] to [12, 12, 12, 12]
   kernel_width: 16 # Reduced from 32 to 16
   electrode_channels: 8
-  autoencoder_checkpoint: path/to/autoencoder/checkpoint.ckpt
+  autoencoder_checkpoint: checkpoints/autoencoder/autoencoder-epoch_51-val_loss_0.0000.ckpt
   freeze_encoder: True
   multi_scale: True
 
