@@ -417,16 +417,21 @@ class TDSConvCTCWithAutoencoderModule(pl.LightningModule):
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         # Apply autoencoder's encoder to reduce channels
-        # Assuming inputs shape: (T, N, bands=2, channels=32, freq)
-        # Need to reshape for encoder, then reshape back
+        # inputs shape: (T, N, bands=2, channels=16, freq)
         T, N, B, C, F = inputs.shape
-        inputs_reshaped = inputs.view(T * N * B, C, F)
 
-        # Apply encoder to reduce channels from 32 to 16
+        # The encoder expects [batch, bands*channels, height, width] format for Conv2d
+        # Need to reshape to match how the autoencoder was trained
+        # First transpose to get bands and channels together, then add a dummy dimension
+        inputs_reshaped = inputs.permute(0, 1, 3, 2, 4).reshape(T * N, C * B, 1, F)
+
+        # Apply encoder - this expects 32 input channels (2 bands * 16 electrode channels)
         encoded = self.encoder(inputs_reshaped)
 
-        # Reshape back to original format but with reduced channels
-        encoded = encoded.view(T, N, B, -1, F)
+        # Reshape back to the original format but with bottleneck channels
+        _, bottleneck_channels, _, F_out = encoded.shape
+        # Reshape back to (T, N, bands=2, reduced_channels, freq)
+        encoded = encoded.reshape(T, N, bottleneck_channels // B, B, F_out).permute(0, 1, 3, 2, 4)
 
         # Continue with normal processing
         x = self.spectrogram_norm(encoded)

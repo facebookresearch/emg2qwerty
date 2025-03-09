@@ -1,0 +1,306 @@
+user: joined_users
+dataset:
+  test:
+  - session: 2020-12-17-1608247041-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608266139-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-16-1608164452-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-18-1608343075-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608240992-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-17-1608237222-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2021-03-23-1616526141-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-22-1616448968-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-05-07-1620428573-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-06-1620329526-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-03-22-1616437692-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-22-1616439005-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-22-1616443154-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-23-1616510910-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-18-1616101267-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-21-1616382076-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  train:
+  - session: 2020-12-17-1608244656-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608255062-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608257601-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608268481-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-18-1608304463-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-18-1608314177-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-18-1608311446-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608220409-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608223018-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608217769-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608247853-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608249779-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608260483-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608262692-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-18-1608301112-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-18-1608303536-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-16-1608132411-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-16-1608176707-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-16-1608166548-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608243953-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-17-1608263300-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-18-1608332019-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-18-1608335464-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-15-1608082012-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-15-1608079307-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-16-1608169994-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-16-1608164146-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-18-1608329111-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2021-03-22-1616450291-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-24-1616620928-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-21-1616355934-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-21-1616351661-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-23-1616528083-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-23-1616532059-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-22-1616451433-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-24-1616623350-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-05-06-1620332034-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-06-1620333243-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-06-1620334499-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-06-1620335640-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-07-1620427344-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-07-1620429735-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-07-1620433618-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-07-1620432292-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-03-22-1616436357-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-20-1616278345-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-20-1616276731-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-19-1616192817-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-19-1616191090-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-24-1616615859-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-24-1616617240-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-24-1616618793-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-22-1616441073-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-22-1616442020-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-20-1616270483-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-20-1616269232-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-20-1616268131-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-19-1616186516-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-19-1616181237-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-23-1616515853-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-22-1616442805-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-22-1616440824-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-22-1616441800-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-20-1616268775-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-20-1616266960-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-20-1616213002-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-19-1616211954-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-21-1616382958-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  val:
+  - session: 2020-12-17-1608249257-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-18-1608306627-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608216650-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608214216-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608266197-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2020-12-16-1608167563-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2021-03-24-1616622167-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-03-21-1616354673-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2021-05-07-1620431033-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-05-06-1620330762-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-03-19-1616161792-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-20-1616279920-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2021-03-23-1616514852-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-19-1616182233-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  - session: 2021-03-20-1616213888-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-18-1616099846-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  root: /mnt/newvolume/dataset
+to_tensor:
+  _target_: emg2qwerty.transforms.ToTensor
+  fields:
+  - emg_left
+  - emg_right
+band_rotation:
+  _target_: emg2qwerty.transforms.ForEach
+  transform:
+    _target_: emg2qwerty.transforms.RandomBandRotation
+    offsets:
+    - -1
+    - 0
+    - 1
+temporal_jitter:
+  _target_: emg2qwerty.transforms.TemporalAlignmentJitter
+  max_offset: 120
+logspec:
+  _target_: emg2qwerty.transforms.LogSpectrogram
+  n_fft: 64
+  hop_length: 16
+specaug:
+  _target_: emg2qwerty.transforms.SpecAugment
+  n_time_masks: 3
+  time_mask_param: 25
+  n_freq_masks: 2
+  freq_mask_param: 4
+transforms:
+  train:
+  - ${to_tensor}
+  - ${band_rotation}
+  - ${temporal_jitter}
+  - ${logspec}
+  - ${specaug}
+  val:
+  - ${to_tensor}
+  - ${logspec}
+  test: ${transforms.val}
+module:
+  _target_: emg2qwerty.lightning.TDSConvCTCWithAutoencoderModule
+  in_features: 264
+  mlp_features:
+  - 192
+  block_channels:
+  - 12
+  - 12
+  - 12
+  - 12
+  kernel_width: 16
+  electrode_channels: 8
+  autoencoder_checkpoint: checkpoints/autoencoder/autoencoder-epoch_51-val_loss_0.0000.ckpt
+  freeze_encoder: true
+  multi_scale: false
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 6000
+  padding:
+  - 1200
+  - 200
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+lr_scheduler:
+  scheduler:
+    _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+    warmup_epochs: 10
+    max_epochs: ${trainer.max_epochs}
+    warmup_start_lr: 1.0e-08
+    eta_min: 1.0e-06
+  interval: epoch
+decoder:
+  _target_: emg2qwerty.decoder.CTCGreedyDecoder
+seed: 1501
+batch_size: 32
+num_workers: 4
+train: true
+checkpoint: null
+monitor_metric: val/CER
+monitor_mode: min
+reduced: false
+trainer:
+  accelerator: gpu
+  devices: 1
+  num_nodes: 1
+  max_epochs: 150
+  default_root_dir: ${hydra:runtime.output_dir}
+  precision: 16
+callbacks:
+- _target_: pytorch_lightning.callbacks.LearningRateMonitor
+- _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  dirpath: ${hydra:runtime.output_dir}/checkpoints/model-tiny
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  save_last: true
+  verbose: true
+- _target_: pytorch_lightning.callbacks.EarlyStopping
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  patience: 10
+  min_delta: 0.05
+  verbose: true

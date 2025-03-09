@@ -101,7 +101,7 @@ def main(config: DictConfig):
     callbacks: list[pl.Callback] = []
 
     # Extract model name for checkpoint naming
-    model_name = "model-tiny"
+    model_name = "model-autoencoder-tiny"
     log.info(f"Using model: {model_name}")
 
     # Process callbacks and customize ModelCheckpoint if present
@@ -111,9 +111,9 @@ def main(config: DictConfig):
             checkpoint_callback = instantiate(
                 cfg,
                 filename=f"{model_name}"
-                + "-{epoch:02d}-{"
+                + "-e_{epoch:02d}-{"
                 + config.monitor_metric.replace("/", "_")
-                + ":.4f}",
+                + "_:.4f}",
                 dirpath=f"{Path.cwd()}/checkpoints/{model_name}",
             )
             callbacks.append(checkpoint_callback)
