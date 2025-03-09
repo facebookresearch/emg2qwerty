@@ -31,6 +31,7 @@ trainer:
   num_nodes: 1
   max_epochs: 150
   default_root_dir: ${hydra:runtime.output_dir}
+  precision: 16 # Mixed precision training
 
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
@@ -44,6 +45,7 @@ callbacks:
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     patience: 10
+    min_delta: 0.003
     verbose: True
 
 dataset:

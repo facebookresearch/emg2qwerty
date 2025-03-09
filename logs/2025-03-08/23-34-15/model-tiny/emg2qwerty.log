@@ -1,0 +1,229 @@
+[2025-03-08 23:34:15,540][__main__][INFO] - 
+Config:
+dataset:
+  test:
+  - session: 2020-12-16-1608164452-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2020-12-17-1608247041-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2020-12-17-1608240992-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  train:
+  - session: 2020-08-13-1597363426-keystrokes-71409769
+    user: 71409769
+  - session: 2020-08-19-1597869769-keystrokes-70495563
+    user: 70495563
+  - session: 2020-08-20-1597973325-keystrokes-81695116
+    user: 81695116
+  - session: 2021-03-22-1616452683-keystrokes-dca-study@1-22937129-bf9c-490a-8857-354aa10cc963
+    user: 29502646
+  - session: 2021-03-21-1616369080-keystrokes-dca-study@1-076df554-16ee-4f8c-870a-decf937569f9
+    user: 13321435
+  - session: 2021-03-19-1616187479-keystrokes-dca-study@1-ba445214-0169-4179-95f5-0d047482b10d
+    user: 12565339
+  - session: 2020-12-17-1608214211-keystrokes-dca-study@1-a2287ace-5eff-4542-9a53-4de6b48e065c
+    user: 46697259
+  - session: 2021-03-25-1616725006-keystrokes-dca-study@1-1cb4f048-7e3c-4935-8d40-93178fd0ff5c
+    user: 76521819
+  - session: 2021-03-22-1616429212-keystrokes-dca-study@1-076df554-16ee-4f8c-870a-decf937569f9
+    user: 13321435
+  - session: 2021-05-07-1620396791-keystrokes-dca-study@1-8e6ea64c-6c71-4df4-8b2e-e0875f8ac096
+    user: 86629437
+  - session: 2021-05-07-1620427350-keystrokes-dca-study@1-f850cf1c-12d0-4eec-a0d9-062080be59fc
+    user: 37398304
+  - session: 2021-06-29-1625018336-keystrokes-dca-study@1-6ea7c4f4-c1a4-44e9-9b3d-9c91fc4412f2
+    user: 56837824
+  - session: 2021-06-29-1625021233-keystrokes-dca-study@1-6ea7c4f4-c1a4-44e9-9b3d-9c91fc4412f2
+    user: 56837824
+  - session: 2021-06-01-1622579731-keystrokes-dca-study@1-9ffd1534-d681-44bd-ba95-b712fef19575
+    user: 80815303
+  - session: 2021-06-02-1622642738-keystrokes-dca-study@1-1c1959a0-c215-44fa-823f-913f64e3abe5
+    user: 92418081
+  - session: 2021-06-19-1624160478-keystrokes-dca-study@1-a4147f22-42a8-4a04-80d3-f634b625c0d1
+    user: 14312238
+  - session: 2021-06-18-1624071711-keystrokes-dca-study@1-d7a42811-d07f-4919-a9f3-22a0028dc621
+    user: 62172970
+  - session: 2021-06-04-1622817314-keystrokes-dca-study@1-0ab4909f-f0d9-4971-a76f-ab42e59e66a7
+    user: 93203007
+  - session: 2021-06-04-1622863166-keystrokes-dca-study@1-0efbe614-9ae6-4131-9192-4398359b4f5f
+    user: 89335547
+  - session: 2021-07-01-1625140038-keystrokes-dca-study@1-f0e6076c-0aaf-4c77-acd5-67efab6aee84
+    user: 20676876
+  - session: 2021-06-21-1624331881-keystrokes-dca-study@1-d7a42811-d07f-4919-a9f3-22a0028dc621
+    user: 62172970
+  - session: 2021-07-01-1625176953-keystrokes-dca-study@1-d2308aaf-907c-49ad-a152-78defda1136a
+    user: 25847138
+  - session: 2021-06-23-1624472940-keystrokes-dca-study@1-721e62ce-2796-4212-bec0-49b3cc99bef1
+    user: 66161848
+  - session: 2021-07-03-1625302365-keystrokes-dca-study@1-5ba93210-8723-451b-886a-0b044390ad04
+    user: 34527640
+  - session: 2021-07-04-1625441433-keystrokes-dca-study@1-e7f42334-1613-4a35-8a8f-c4e2b1e82282
+    user: 1438774
+  - session: 2021-07-05-1625534309-keystrokes-dca-study@1-f95f6397-6fc9-4dbe-ba36-c77b96997874
+    user: 97946571
+  - session: 2021-07-13-1626224990-keystrokes-dca-study@1-f16ddfeb-827e-4668-aa6b-c9f39f9e83f4
+    user: 94305460
+  val:
+  - session: 2021-07-05-1625524718-keystrokes-dca-study@1-e7f42334-1613-4a35-8a8f-c4e2b1e82282
+    user: 1438774
+  - session: 2021-05-09-1620603208-keystrokes-dca-study@1-f6fea34b-8642-4a9d-95fc-6054d9c5c50a
+    user: 3734552
+  - session: 2021-05-05-1620220584-keystrokes-dca-study@1-78dbf80c-9490-49ff-980c-adbee8d9f8a8
+    user: 6526339
+  - session: 2021-07-10-1625925714-keystrokes-dca-study@1-3c9e5b2b-8b63-4141-8193-cc61b0697609
+    user: 7746087
+  - session: 2020-08-18-1597775258-keystrokes-11944098
+    user: 11944098
+  - session: 2021-06-23-1624469032-keystrokes-dca-study@1-a4147f22-42a8-4a04-80d3-f634b625c0d1
+    user: 14312238
+  - session: 2021-07-09-1625878379-keystrokes-dca-study@1-d2308aaf-907c-49ad-a152-78defda1136a
+    user: 25847138
+  - session: 2021-03-19-1616172322-keystrokes-dca-study@1-22937129-bf9c-490a-8857-354aa10cc963
+    user: 29502646
+  - session: 2020-12-17-1608221679-keystrokes-dca-study@1-d59e496f-fea0-4256-a4ac-2cd66fc6d60b
+    user: 33259248
+  - session: 2021-05-08-1620486839-keystrokes-dca-study@1-f850cf1c-12d0-4eec-a0d9-062080be59fc
+    user: 37398304
+  - session: 2021-06-21-1624328214-keystrokes-dca-study@1-4d5c9cdd-f8bf-4d76-b875-b529c26f3b24
+    user: 41556660
+  - session: 2020-08-20-1597940034-keystrokes-45200932
+    user: 45200932
+  - session: 2021-06-18-1624061584-keystrokes-dca-study@1-445b075b-456d-4e7f-808e-137e00979cee
+    user: 47005474
+  - session: 2021-05-29-1622298720-keystrokes-dca-study@1-dfd3c233-34fa-4f44-b125-fe5268fc4a75
+    user: 54043950
+  - session: 2021-07-03-1625366193-keystrokes-dca-study@1-c438c067-5536-4668-97db-c1c5cf9a7875
+    user: 57024413
+  - session: 2021-06-23-1624481309-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+    user: 60709537
+  - session: 2021-05-31-1622505807-keystrokes-dca-study@1-ef90b2cb-ad3b-4704-b14f-c3da33d3c950
+    user: 61833540
+  - session: 2021-06-26-1624742058-keystrokes-dca-study@1-1e293583-22d8-44dc-9fd5-40a1fcda5a58
+    user: 63959856
+  - session: 2021-07-01-1625146259-keystrokes-dca-study@1-3936a73a-f358-4a7e-a92d-4e6c4797bcbf
+    user: 65383704
+  - session: 2020-08-20-1597955521-keystrokes-
+    user: 66727638
+  - session: 2020-08-19-1597868334-keystrokes-70495563
+    user: 70495563
+  - session: 2021-03-20-1616289679-keystrokes-dca-study@1-ba74fcc7-0220-4c24-be89-cac6cafee050
+    user: 74403863
+  - session: 2021-06-18-1624055897-keystrokes-dca-study@1-09d00567-1d61-47ba-91a5-52a8e2aca64e
+    user: 80214583
+  - session: 2021-06-02-1622674754-keystrokes-dca-study@1-9ffd1534-d681-44bd-ba95-b712fef19575
+    user: 80815303
+  - session: 2020-12-16-1608132208-keystrokes-dca-study@1-9b7602a6-4a91-4eb7-96c5-8fa37e2dc571
+    user: 83774284
+  - session: 2021-05-04-1620146048-keystrokes-dca-study@1-8e6ea64c-6c71-4df4-8b2e-e0875f8ac096
+    user: 86629437
+  - session: 2021-06-03-1622769965-keystrokes-dca-study@1-a15f6697-cd43-4dff-8233-437036bb15f2
+    user: 89415164
+  - session: 2021-06-04-1622849830-keystrokes-dca-study@1-1c1959a0-c215-44fa-823f-913f64e3abe5
+    user: 92418081
+  - session: 2021-07-01-1625170158-keystrokes-dca-study@1-f16ddfeb-827e-4668-aa6b-c9f39f9e83f4
+    user: 94305460
+  - session: 2021-06-24-1624544675-keystrokes-dca-study@1-ff97d0de-6ef6-431f-a29e-6241675dc921
+    user: 97336339
+  - session: 2021-06-30-1625076606-keystrokes-dca-study@1-a0194d50-ba57-44cf-86a9-35b95d286020
+    user: 99192446
+  root: ${hydra:runtime.cwd}/mnt/dataset
+to_tensor:
+  _target_: emg2qwerty.transforms.ToTensor
+  fields:
+  - emg_left
+  - emg_right
+band_rotation:
+  _target_: emg2qwerty.transforms.ForEach
+  transform:
+    _target_: emg2qwerty.transforms.RandomBandRotation
+    offsets:
+    - -1
+    - 0
+    - 1
+temporal_jitter:
+  _target_: emg2qwerty.transforms.TemporalAlignmentJitter
+  max_offset: 120
+logspec:
+  _target_: emg2qwerty.transforms.LogSpectrogram
+  n_fft: 64
+  hop_length: 16
+specaug:
+  _target_: emg2qwerty.transforms.SpecAugment
+  n_time_masks: 3
+  time_mask_param: 25
+  n_freq_masks: 2
+  freq_mask_param: 4
+transforms:
+  train:
+  - ${to_tensor}
+  - ${band_rotation}
+  - ${temporal_jitter}
+  - ${logspec}
+  - ${specaug}
+  val:
+  - ${to_tensor}
+  - ${logspec}
+  test: ${transforms.val}
+module:
+  _target_: emg2qwerty.lightning.TDSConvCTCModule
+  in_features: 528
+  mlp_features:
+  - 192
+  block_channels:
+  - 12
+  - 12
+  - 12
+  - 12
+  kernel_width: 16
+  electrode_channels: 16
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 6000
+  padding:
+  - 1200
+  - 200
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+lr_scheduler:
+  scheduler:
+    _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+    warmup_epochs: 10
+    max_epochs: ${trainer.max_epochs}
+    warmup_start_lr: 1.0e-08
+    eta_min: 1.0e-06
+  interval: epoch
+decoder:
+  _target_: emg2qwerty.decoder.CTCGreedyDecoder
+seed: 1501
+batch_size: 32
+num_workers: 4
+train: true
+checkpoint: null
+monitor_metric: val/CER
+monitor_mode: min
+reduced: false
+trainer:
+  accelerator: gpu
+  devices: 1
+  num_nodes: 1
+  max_epochs: 150
+  default_root_dir: ${hydra:runtime.output_dir}
+  precision: 16
+callbacks:
+- _target_: pytorch_lightning.callbacks.LearningRateMonitor
+- _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  dirpath: ${hydra:runtime.output_dir}/checkpoints/model-tiny
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  save_last: true
+  verbose: true
+- _target_: pytorch_lightning.callbacks.EarlyStopping
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  patience: 10
+  min_delta: 0.003
+  verbose: true
+
+[2025-03-08 23:34:15,543][__main__][INFO] - Instantiating LightningModule {'_target_': 'emg2qwerty.lightning.TDSConvCTCModule', 'in_features': 528, 'mlp_features': [192], 'block_channels': [12, 12, 12, 12], 'kernel_width': 16, 'electrode_channels': 16}
+[2025-03-08 23:34:15,606][__main__][INFO] - Instantiating LightningDataModule {'_target_': 'emg2qwerty.lightning.WindowedEMGDataModule', 'window_length': 6000, 'padding': [1200, 200]}

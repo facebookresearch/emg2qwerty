@@ -1,0 +1,333 @@
+user: generic_reduced
+dataset:
+  test:
+  - session: 2020-12-16-1608164452-keystrokes-dca-study@1-d5eda54b-90dc-48e3-954d-007973c8c7fd
+    user: 5775561
+  - session: 2021-03-18-1616101267-keystrokes-dca-study@1-ab8fe0bf-4f4e-4c20-8fce-a9bc6d6cbd62
+    user: 14989984
+  - session: 2021-03-23-1616526141-keystrokes-dca-study@1-d81940d1-c965-4fc9-b5b6-dc3da5e2599e
+    user: 18243794
+  - session: 2020-12-17-1608247041-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+    user: 43037958
+  - session: 2021-05-07-1620428573-keystrokes-dca-study@1-71e5c86d-9ee9-4c1f-9d32-03b170f9cf8e
+    user: 43359267
+  - session: 2021-03-22-1616437692-keystrokes-dca-study@1-0d54a019-26c8-4e84-83e7-d513bedbb433
+    user: 67011593
+  - session: 2020-12-17-1608240992-keystrokes-dca-study@1-d09c3c47-708c-4b37-9e12-a0218ae9e5c4
+    user: 71786456
+  - session: 2021-03-22-1616443154-keystrokes-dca-study@1-ce039945-b49a-44ea-b3d6-007dace1b7a3
+    user: 75228805
+  train:
+  - session: 2020-08-13-1597363426-keystrokes-71409769
+    user: 71409769
+  - session: 2020-08-19-1597869769-keystrokes-70495563
+    user: 70495563
+  - session: 2020-08-20-1597973325-keystrokes-81695116
+    user: 81695116
+  - session: 2021-03-22-1616452683-keystrokes-dca-study@1-22937129-bf9c-490a-8857-354aa10cc963
+    user: 29502646
+  - session: 2021-03-21-1616369080-keystrokes-dca-study@1-076df554-16ee-4f8c-870a-decf937569f9
+    user: 13321435
+  - session: 2021-03-19-1616187479-keystrokes-dca-study@1-ba445214-0169-4179-95f5-0d047482b10d
+    user: 12565339
+  - session: 2020-12-17-1608214211-keystrokes-dca-study@1-a2287ace-5eff-4542-9a53-4de6b48e065c
+    user: 46697259
+  - session: 2021-03-25-1616725006-keystrokes-dca-study@1-1cb4f048-7e3c-4935-8d40-93178fd0ff5c
+    user: 76521819
+  - session: 2021-03-22-1616429212-keystrokes-dca-study@1-076df554-16ee-4f8c-870a-decf937569f9
+    user: 13321435
+  - session: 2021-05-07-1620396791-keystrokes-dca-study@1-8e6ea64c-6c71-4df4-8b2e-e0875f8ac096
+    user: 86629437
+  - session: 2021-05-07-1620427350-keystrokes-dca-study@1-f850cf1c-12d0-4eec-a0d9-062080be59fc
+    user: 37398304
+  - session: 2021-06-29-1625018336-keystrokes-dca-study@1-6ea7c4f4-c1a4-44e9-9b3d-9c91fc4412f2
+    user: 56837824
+  - session: 2021-06-29-1625021233-keystrokes-dca-study@1-6ea7c4f4-c1a4-44e9-9b3d-9c91fc4412f2
+    user: 56837824
+  - session: 2021-06-01-1622579731-keystrokes-dca-study@1-9ffd1534-d681-44bd-ba95-b712fef19575
+    user: 80815303
+  - session: 2021-06-02-1622642738-keystrokes-dca-study@1-1c1959a0-c215-44fa-823f-913f64e3abe5
+    user: 92418081
+  - session: 2021-06-19-1624160478-keystrokes-dca-study@1-a4147f22-42a8-4a04-80d3-f634b625c0d1
+    user: 14312238
+  - session: 2021-06-18-1624071711-keystrokes-dca-study@1-d7a42811-d07f-4919-a9f3-22a0028dc621
+    user: 62172970
+  - session: 2021-06-04-1622817314-keystrokes-dca-study@1-0ab4909f-f0d9-4971-a76f-ab42e59e66a7
+    user: 93203007
+  - session: 2021-06-04-1622863166-keystrokes-dca-study@1-0efbe614-9ae6-4131-9192-4398359b4f5f
+    user: 89335547
+  - session: 2021-07-01-1625140038-keystrokes-dca-study@1-f0e6076c-0aaf-4c77-acd5-67efab6aee84
+    user: 20676876
+  - session: 2021-06-21-1624331881-keystrokes-dca-study@1-d7a42811-d07f-4919-a9f3-22a0028dc621
+    user: 62172970
+  - session: 2021-07-01-1625176953-keystrokes-dca-study@1-d2308aaf-907c-49ad-a152-78defda1136a
+    user: 25847138
+  - session: 2021-06-23-1624472940-keystrokes-dca-study@1-721e62ce-2796-4212-bec0-49b3cc99bef1
+    user: 66161848
+  - session: 2021-07-03-1625302365-keystrokes-dca-study@1-5ba93210-8723-451b-886a-0b044390ad04
+    user: 34527640
+  - session: 2021-07-04-1625441433-keystrokes-dca-study@1-e7f42334-1613-4a35-8a8f-c4e2b1e82282
+    user: 1438774
+  - session: 2021-07-05-1625534309-keystrokes-dca-study@1-f95f6397-6fc9-4dbe-ba36-c77b96997874
+    user: 97946571
+  - session: 2021-07-13-1626224990-keystrokes-dca-study@1-f16ddfeb-827e-4668-aa6b-c9f39f9e83f4
+    user: 94305460
+  val:
+  - session: 2021-07-05-1625524718-keystrokes-dca-study@1-e7f42334-1613-4a35-8a8f-c4e2b1e82282
+    user: 1438774
+  - session: 2020-12-15-1608060350-keystrokes-dca-study@1-d32f41cc-41d0-4e4a-9c4a-0c1bab5c6b89
+    user: 2396581
+  - session: 2021-06-03-1622767371-keystrokes-dca-study@1-98830534-8a96-4490-82ee-649c81e4d3e5
+    user: 3537794
+  - session: 2021-05-09-1620603208-keystrokes-dca-study@1-f6fea34b-8642-4a9d-95fc-6054d9c5c50a
+    user: 3734552
+  - session: 2021-05-08-1620513680-keystrokes-dca-study@1-fdea9c53-3dac-42eb-92d6-94b74a9318d2
+    user: 5344357
+  - session: 2021-06-04-1622830604-keystrokes-dca-study@1-6a9a9bc3-ad92-4491-a202-a5ab9c7dc7fd
+    user: 5681256
+  - session: 2021-05-05-1620220584-keystrokes-dca-study@1-78dbf80c-9490-49ff-980c-adbee8d9f8a8
+    user: 6526339
+  - session: 2021-06-03-1622769409-keystrokes-dca-study@1-f2122c91-4dfe-4978-965a-ecf0eecd46d9
+    user: 6564851
+  - session: 2021-03-23-1616556514-keystrokes-dca-study@1-9b960f08-4347-41ff-a492-c58bdddc2938
+    user: 6950380
+  - session: 2021-07-10-1625925714-keystrokes-dca-study@1-3c9e5b2b-8b63-4141-8193-cc61b0697609
+    user: 7746087
+  - session: 2020-08-18-1597786596-keystrokes-09456349
+    user: 9456349
+  - session: 2021-07-03-1625326774-keystrokes-dca-study@1-38dc2222-0ff7-44aa-8599-1baea3112e66
+    user: 11372316
+  - session: 2020-08-18-1597775258-keystrokes-11944098
+    user: 11944098
+  - session: 2021-03-19-1616183500-keystrokes-dca-study@1-ba445214-0169-4179-95f5-0d047482b10d
+    user: 12565339
+  - session: 2021-03-22-1616428014-keystrokes-dca-study@1-076df554-16ee-4f8c-870a-decf937569f9
+    user: 13321435
+  - session: 2021-06-23-1624469032-keystrokes-dca-study@1-a4147f22-42a8-4a04-80d3-f634b625c0d1
+    user: 14312238
+  - session: 2021-05-29-1622306944-keystrokes-dca-study@1-2eec8f87-a54f-4f0a-94a9-0c9f1b21d13b
+    user: 18200807
+  - session: 2021-07-02-1625223938-keystrokes-dca-study@1-f0e6076c-0aaf-4c77-acd5-67efab6aee84
+    user: 20676876
+  - session: 2021-07-09-1625878379-keystrokes-dca-study@1-d2308aaf-907c-49ad-a152-78defda1136a
+    user: 25847138
+  - session: 2021-05-29-1622269215-keystrokes-dca-study@1-fc1137dc-3aa8-44e6-9c84-2e1a1708d490
+    user: 25915650
+  - session: 2021-05-06-1620326540-keystrokes-dca-study@1-176b2f34-883b-4de4-92a4-24724927d22d
+    user: 26940776
+  - session: 2021-03-19-1616172322-keystrokes-dca-study@1-22937129-bf9c-490a-8857-354aa10cc963
+    user: 29502646
+  - session: 2021-06-22-1624398609-keystrokes-dca-study@1-3189becd-d30f-45bb-a09a-2be5cd8d15c3
+    user: 30481951
+  - session: 2020-12-17-1608226085-keystrokes-dca-study@1-1ca73229-a1f8-42a1-8363-3c6cfcb1b513
+    user: 30807164
+  - session: 2020-12-17-1608221679-keystrokes-dca-study@1-d59e496f-fea0-4256-a4ac-2cd66fc6d60b
+    user: 33259248
+  - session: 2021-06-02-1622686427-keystrokes-dca-study@1-d5ba466f-5922-423f-b8bb-b3c973f3fa8d
+    user: 33505485
+  - session: 2021-07-03-1625303379-keystrokes-dca-study@1-5ba93210-8723-451b-886a-0b044390ad04
+    user: 34527640
+  - session: 2021-05-08-1620486839-keystrokes-dca-study@1-f850cf1c-12d0-4eec-a0d9-062080be59fc
+    user: 37398304
+  - session: 2021-06-01-1622570799-keystrokes-dca-study@1-b15f3b16-61f0-42a9-ab2b-4163e85955fa
+    user: 39024419
+  - session: 2021-06-04-1622838535-keystrokes-dca-study@1-d4068ffa-fea5-4c1f-a9eb-2be5150786f3
+    user: 41222064
+  - session: 2021-06-21-1624328214-keystrokes-dca-study@1-4d5c9cdd-f8bf-4d76-b875-b529c26f3b24
+    user: 41556660
+  - session: 2021-07-04-1625435299-keystrokes-dca-study@1-87449ca7-8a37-478f-acd7-3744b8181ba2
+    user: 42383274
+  - session: 2021-05-09-1620583533-keystrokes-dca-study@1-64b12b5e-f928-40b5-b1c3-e67ae03598c1
+    user: 42408607
+  - session: 2020-08-20-1597940034-keystrokes-45200932
+    user: 45200932
+  - session: 2021-06-06-1622994080-keystrokes-dca-study@1-fac1cb88-09fa-4180-b411-e84149cbad3e
+    user: 45828573
+  - session: 2020-12-16-1608161945-keystrokes-dca-study@1-a2287ace-5eff-4542-9a53-4de6b48e065c
+    user: 46697259
+  - session: 2021-06-18-1624061584-keystrokes-dca-study@1-445b075b-456d-4e7f-808e-137e00979cee
+    user: 47005474
+  - session: 2021-06-10-1623325882-keystrokes-dca-study@1-cf3a061f-8c51-4f23-bacf-276efe933d1d
+    user: 53845929
+  - session: 2021-07-01-1625186078-keystrokes-dca-study@1-c2c7de8e-1ce6-4c25-9f11-6675be2aadd2
+    user: 53853064
+  - session: 2021-05-29-1622298720-keystrokes-dca-study@1-dfd3c233-34fa-4f44-b125-fe5268fc4a75
+    user: 54043950
+  - session: 2021-06-28-1624910921-keystrokes-dca-study@1-d7d3e58a-cdd5-45e2-a020-f6ff660205a7
+    user: 54618645
+  - session: 2021-06-27-1624828365-keystrokes-dca-study@1-6ea7c4f4-c1a4-44e9-9b3d-9c91fc4412f2
+    user: 56837824
+  - session: 2021-07-03-1625366193-keystrokes-dca-study@1-c438c067-5536-4668-97db-c1c5cf9a7875
+    user: 57024413
+  - session: 2021-07-13-1626231561-keystrokes-dca-study@1-addbd4a2-9ebc-496a-9fc4-60c9ff34dffe
+    user: 59627171
+  - session: 2020-08-19-1597845008-keystrokes-60557560
+    user: 60557560
+  - session: 2021-06-23-1624481309-keystrokes-dca-study@1-4f8d707f-8512-492c-8a29-581e2b602d5d
+    user: 60709537
+  - session: 2021-05-07-1620422333-keystrokes-dca-study@1-0e442012-468f-4a38-8c47-6b15945ce0eb
+    user: 60776453
+  - session: 2020-08-20-1597960126-keystrokes-61792419
+    user: 61792419
+  - session: 2021-05-31-1622505807-keystrokes-dca-study@1-ef90b2cb-ad3b-4704-b14f-c3da33d3c950
+    user: 61833540
+  - session: 2021-06-24-1624542595-keystrokes-dca-study@1-d7a42811-d07f-4919-a9f3-22a0028dc621
+    user: 62172970
+  - session: 2021-05-06-1620319755-keystrokes-dca-study@1-899d9b38-70dd-48ad-b3ed-b8ad01b6ae38
+    user: 62451416
+  - session: 2021-06-26-1624742058-keystrokes-dca-study@1-1e293583-22d8-44dc-9fd5-40a1fcda5a58
+    user: 63959856
+  - session: 2021-03-18-1616099637-keystrokes-dca-study@1-16a4fd49-a344-4a75-8453-0811d0b42bd0
+    user: 64036820
+  - session: 2021-06-04-1622790752-keystrokes-dca-study@1-cf193c7b-3420-447f-aded-c7f7d9abbd5a
+    user: 65027280
+  - session: 2021-07-01-1625146259-keystrokes-dca-study@1-3936a73a-f358-4a7e-a92d-4e6c4797bcbf
+    user: 65383704
+  - session: 2021-06-18-1624039669-keystrokes-dca-study@1-721e62ce-2796-4212-bec0-49b3cc99bef1
+    user: 66161848
+  - session: 2021-06-27-1624851730-keystrokes-dca-study@1-cc384220-229a-44f2-802b-36001139c84f
+    user: 66483889
+  - session: 2020-08-20-1597955521-keystrokes-
+    user: 66727638
+  - session: 2021-03-27-1616883924-keystrokes-dca-study@1-a2130278-ef80-46f0-92c9-b68149175bdd
+    user: 68186383
+  - session: 2021-06-02-1622613022-keystrokes-dca-study@1-8068627d-a697-4cd6-83e6-5c7644ff31b5
+    user: 68324575
+  - session: 2020-08-19-1597868334-keystrokes-70495563
+    user: 70495563
+  - session: 2020-08-18-1597772298-keystrokes-71409769
+    user: 71409769
+  - session: 2020-08-20-1597938979-keystrokes-72389321
+    user: 72389321
+  - session: 2021-03-20-1616289679-keystrokes-dca-study@1-ba74fcc7-0220-4c24-be89-cac6cafee050
+    user: 74403863
+  - session: 2021-03-25-1616729010-keystrokes-dca-study@1-1cb4f048-7e3c-4935-8d40-93178fd0ff5c
+    user: 76521819
+  - session: 2021-06-24-1624576425-keystrokes-dca-study@1-595bc03a-09e0-4f1f-8987-848d1788530f
+    user: 76574170
+  - session: 2021-06-18-1624055897-keystrokes-dca-study@1-09d00567-1d61-47ba-91a5-52a8e2aca64e
+    user: 80214583
+  - session: 2021-05-10-1620656968-keystrokes-dca-study@1-c0b0f882-66db-40f9-a58c-e678c1d56e82
+    user: 80587505
+  - session: 2020-08-21-1598031035-keystrokes-80745050
+    user: 80745050
+  - session: 2021-06-02-1622674754-keystrokes-dca-study@1-9ffd1534-d681-44bd-ba95-b712fef19575
+    user: 80815303
+  - session: 2021-03-25-1616696081-keystrokes-dca-study@1-bb7df249-48e7-4981-8c69-66587bce18cb
+    user: 81522433
+  - session: 2020-08-20-1597974992-keystrokes-81695116
+    user: 81695116
+  - session: 2020-12-16-1608132208-keystrokes-dca-study@1-9b7602a6-4a91-4eb7-96c5-8fa37e2dc571
+    user: 83774284
+  - session: 2021-06-02-1622661744-keystrokes-dca-study@1-60e3c072-0df3-4d37-a783-500e826416ff
+    user: 84958031
+  - session: 2021-07-01-1625163131-keystrokes-dca-study@1-7d09d115-389c-424c-a649-5c480f8c5e52
+    user: 85881224
+  - session: 2021-05-04-1620146048-keystrokes-dca-study@1-8e6ea64c-6c71-4df4-8b2e-e0875f8ac096
+    user: 86629437
+  - session: 2021-06-07-1623040032-keystrokes-dca-study@1-4732180c-c5d9-468e-b18b-b3c4038554b3
+    user: 87998384
+  - session: 2021-06-03-1622766673-keystrokes-dca-study@1-0efbe614-9ae6-4131-9192-4398359b4f5f
+    user: 89335547
+  - session: 2021-06-03-1622769965-keystrokes-dca-study@1-a15f6697-cd43-4dff-8233-437036bb15f2
+    user: 89415164
+  - session: 2021-05-10-1620666654-keystrokes-dca-study@1-390e43c1-f95d-474e-915f-37f03d2d66e4
+    user: 90443344
+  - session: 2021-06-20-1624193579-keystrokes-dca-study@1-bf51f122-2b6a-4f56-bb5b-876f645c87cf
+    user: 92249581
+  - session: 2021-06-04-1622849830-keystrokes-dca-study@1-1c1959a0-c215-44fa-823f-913f64e3abe5
+    user: 92418081
+  - session: 2021-05-05-1620254024-keystrokes-dca-study@1-f4ac66fd-8f1e-4d58-9f63-59dd59f662b9
+    user: 92903591
+  - session: 2021-06-04-1622819427-keystrokes-dca-study@1-0ab4909f-f0d9-4971-a76f-ab42e59e66a7
+    user: 93203007
+  - session: 2021-07-01-1625170158-keystrokes-dca-study@1-f16ddfeb-827e-4668-aa6b-c9f39f9e83f4
+    user: 94305460
+  - session: 2021-07-12-1626147915-keystrokes-dca-study@1-89803b0e-a192-4cbc-bc83-1b8c6ac798f1
+    user: 94998811
+  - session: 2021-06-26-1624762988-keystrokes-dca-study@1-6a947405-c286-42b7-b705-2acaaee6dfa5
+    user: 95396398
+  - session: 2021-06-24-1624544675-keystrokes-dca-study@1-ff97d0de-6ef6-431f-a29e-6241675dc921
+    user: 97336339
+  - session: 2021-07-04-1625437332-keystrokes-dca-study@1-83db389d-2eb5-48ec-9e60-992e297b2f6c
+    user: 97890030
+  - session: 2021-07-04-1625422253-keystrokes-dca-study@1-f95f6397-6fc9-4dbe-ba36-c77b96997874
+    user: 97946571
+  - session: 2021-06-30-1625076606-keystrokes-dca-study@1-a0194d50-ba57-44cf-86a9-35b95d286020
+    user: 99192446
+  root: /mnt/newvolume/dataset
+to_tensor:
+  _target_: emg2qwerty.transforms.ToTensor
+  fields:
+  - emg_left
+  - emg_right
+band_rotation:
+  _target_: emg2qwerty.transforms.ForEach
+  transform:
+    _target_: emg2qwerty.transforms.RandomBandRotation
+    offsets:
+    - -1
+    - 0
+    - 1
+temporal_jitter:
+  _target_: emg2qwerty.transforms.TemporalAlignmentJitter
+  max_offset: 120
+logspec:
+  _target_: emg2qwerty.transforms.LogSpectrogram
+  n_fft: 64
+  hop_length: 16
+specaug:
+  _target_: emg2qwerty.transforms.SpecAugment
+  n_time_masks: 3
+  time_mask_param: 25
+  n_freq_masks: 2
+  freq_mask_param: 4
+transforms:
+  train:
+  - ${to_tensor}
+  - ${band_rotation}
+  - ${temporal_jitter}
+  - ${logspec}
+  - ${specaug}
+  val:
+  - ${to_tensor}
+  - ${logspec}
+  test: ${transforms.val}
+seed: 1501
+batch_size: 32
+num_workers: 4
+train: true
+checkpoint: null
+monitor_metric: val/loss
+monitor_mode: min
+reduced: false
+autoencoder:
+  in_channels: 32
+  bottleneck_channels: 16
+  lr: 0.0001
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 8000
+  padding:
+  - 1800
+  - 200
+trainer:
+  accelerator: gpu
+  devices: 1
+  num_nodes: 1
+  max_epochs: 150
+  default_root_dir: ${hydra:runtime.output_dir}
+  precision: 16
+callbacks:
+- _target_: pytorch_lightning.callbacks.LearningRateMonitor
+- _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  dirpath: ${hydra:runtime.output_dir}/autoencoder/checkpoints
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  save_last: true
+  verbose: true
+- _target_: pytorch_lightning.callbacks.EarlyStopping
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  patience: 10
+  verbose: true

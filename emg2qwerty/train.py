@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
 import logging
 import os
 import pprint
@@ -15,6 +14,8 @@ import hydra
 import pytorch_lightning as pl
 from hydra.utils import get_original_cwd, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from torch import set_float32_matmul_precision
 
 from emg2qwerty import transforms, utils
 from emg2qwerty.transforms import Transform
@@ -24,6 +25,7 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../config", config_name="base")
 def main(config: DictConfig):
+    set_float32_matmul_precision("high")
     log.info(f"\nConfig:\n{OmegaConf.to_yaml(config)}")
 
     # Add working dir to PYTHONPATH
@@ -50,10 +52,7 @@ def main(config: DictConfig):
                 for session, user in zip(sessions, users)
             ]
         else:
-            return [
-                Path(config.dataset.root).joinpath(f"{user}").joinpath(f"{session}.hdf5")
-                for session, user in zip(sessions, users)
-            ]
+            return [Path(config.dataset.root).joinpath(f"{session}.hdf5") for session in sessions]
 
     # Helper to instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
@@ -97,7 +96,7 @@ def main(config: DictConfig):
     callbacks: list[pl.Callback] = []
 
     # Extract model name for checkpoint naming
-    model_name = config.model._target_.split(".")[-1]
+    model_name = "model-tiny"
     log.info(f"Using model: {model_name}")
 
     # Process callbacks and customize ModelCheckpoint if present
@@ -120,6 +119,10 @@ def main(config: DictConfig):
     trainer = pl.Trainer(
         **config.trainer,
         callbacks=callbacks,
+        logger=[
+            TensorBoardLogger(save_dir=f"{Path.cwd()}/logs/", name=model_name),
+            CSVLogger(save_dir=f"{Path.cwd()}/logs/", name=model_name),
+        ],
     )
 
     if config.train:

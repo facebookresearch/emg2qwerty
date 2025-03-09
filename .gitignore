@@ -40,8 +40,13 @@ dmypy.json
 .hypothesis
 
 # Logs and checkpoints
-logs/
-lightning_logs/
+*.ckpt
+*.pt
+*.pth
+*.pth.tar
+*.pth.tar.gz
+*.pth.tar.xz
+*.pth.tar.bz2
 
 # Data
 data
@@ -50,12 +55,9 @@ bids_data
 
 # LM
 wikitext-103-raw*
-<<<<<<< Updated upstream
-=======
 
 # Outputs
 output/
 
 # Dataset
 mnt/
->>>>>>> Stashed changes
