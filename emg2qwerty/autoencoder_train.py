@@ -12,6 +12,7 @@ from typing import Any
 
 import hydra
 import pytorch_lightning as pl
+import torch
 from hydra.utils import get_original_cwd, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
@@ -73,12 +74,16 @@ def main(config: DictConfig):
 
     if config.checkpoint is not None:
         log.info(f"Loading module from checkpoint {config.checkpoint}")
-        module = module.load_from_checkpoint(
-            config.checkpoint,
-            in_channels=config.autoencoder.in_channels,
-            bottleneck_channels=config.autoencoder.bottleneck_channels,
-            lr=config.autoencoder.lr,
+        checkpoint = torch.load(
+            config.checkpoint, map_location=lambda storage, loc: storage, weights_only=False
         )
+        module.load_state_dict(checkpoint["state_dict"])
+        # module = module.load_from_checkpoint(
+        #     config.checkpoint,
+        #     in_channels=config.autoencoder.in_channels,
+        #     bottleneck_channels=config.autoencoder.bottleneck_channels,
+        #     lr=config.autoencoder.lr,
+        # )
 
     # Instantiate LightningDataModule
     log.info(f"Instantiating LightningDataModule {config.datamodule}")
@@ -143,7 +148,13 @@ def main(config: DictConfig):
         trainer.fit(module, datamodule, ckpt_path=resume_from_checkpoint)
 
         # Load best checkpoint
-        module = module.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+        checkpoint = torch.load(
+            trainer.checkpoint_callback.best_model_path,
+            map_location=lambda storage, loc: storage,
+            weights_only=False,
+        )
+        module.load_state_dict(checkpoint["state_dict"])
+        # module = module.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
     # Validate and test on the best checkpoint (if training), or on the
     # loaded `config.checkpoint` (otherwise)

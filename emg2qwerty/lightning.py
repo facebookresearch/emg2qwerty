@@ -365,7 +365,9 @@ class TDSConvCTCWithAutoencoderModule(pl.LightningModule):
         num_features = self.NUM_BANDS * mlp_features[-1]
 
         # Load autoencoder from checkpoint
-        autoencoder_module = AutoencoderModule.load_from_checkpoint(autoencoder_checkpoint)
+        autoencoder_module = AutoencoderModule()
+        checkpoint = torch.load(autoencoder_checkpoint, map_location=lambda storage, loc: storage)
+        autoencoder_module.load_state_dict(checkpoint["state_dict"])
         self.encoder = autoencoder_module.autoencoder.encoder
 
         # Freeze encoder weights if specified
