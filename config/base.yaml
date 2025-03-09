@@ -36,7 +36,7 @@ callbacks:
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     patience: 10
-    min_delta: 0.003
+    min_delta: 0.05
     verbose: True
 
 dataset:

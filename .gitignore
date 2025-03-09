@@ -40,7 +40,6 @@ dmypy.json
 .hypothesis
 
 # Logs and checkpoints
-*.ckpt
 *.pt
 *.pth
 *.pth.tar
