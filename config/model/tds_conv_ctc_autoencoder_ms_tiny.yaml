@@ -1,0 +1,30 @@
+# @package _global_
+# module:
+#   _target_: emg2qwerty.lightning.TDSConvCTCWithAutoencoderModule
+#   in_features: 264 # freq * channels = (n_fft // 2 + 1) * 16
+#   mlp_features: [192]  # Reduced from 384 to 192
+#   block_channels: [16, 16, 16]  # Reduced from [24,24,24,24] to [16,16,16]
+#   kernel_width: 24  # Reduced from 32 to 24
+#   electrode_channels: 8 # Reduced from 16 to 8 as we now have 16 total channels (2 bands * 8)
+#   autoencoder_checkpoint: path/to/autoencoder/checkpoint.ckpt
+#   freeze_encoder: true
+
+# datamodule:
+#   _target_: emg2qwerty.lightning.WindowedEMGDataModule
+#   window_length: 8000 # 4 sec windows for 2kHz EMG
+#   padding: [1800, 200] # 900ms past context, 100ms future context
+module:
+  _target_: emg2qwerty.lightning.TDSConvCTCWithAutoencoderModule
+  in_features: 264 # freq * channels = (n_fft // 2 + 1) * 8
+  mlp_features: [192] # Reduced from 384 to 192
+  block_channels: [12, 12, 12, 12] # Reduced from [24,24,24,24] to [12, 12, 12, 12]
+  kernel_width: 16 # Reduced from 32 to 16
+  electrode_channels: 8
+  autoencoder_checkpoint: checkpoints/autoencoder/autoencoder-epoch_51-val_loss_0.0000.ckpt
+  freeze_encoder: True
+  multi_scale: True
+
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 6000 # Reduced from 8000 to 6000 (3 sec windows)
+  padding: [1200, 200] # Reduced past context from 1800 to 1200

@@ -1,7 +1,7 @@
 defaults:
-  - user: generic
+  - user: joined_users
   - transforms: log_spectrogram
-  - model: tds_conv_ctc
+  - model: tds_conv_ctc_tiny
   - optimizer: adam
   - lr_scheduler: linear_warmup_cosine_annealing
   - decoder: ctc_greedy
@@ -23,22 +23,28 @@ trainer:
   num_nodes: 1
   max_epochs: 150
   default_root_dir: ${hydra:runtime.output_dir}
-
+  precision: 16 # Mixed precision training
 callbacks:
   - _target_: pytorch_lightning.callbacks.LearningRateMonitor
   - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-    dirpath: ${hydra:runtime.output_dir}/checkpoints
+    dirpath: ${hydra:runtime.output_dir}/checkpoints/model-tiny
     monitor: ${monitor_metric}
     mode: ${monitor_mode}
     save_last: True
     verbose: True
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor_metric}
+    mode: ${monitor_mode}
+    patience: 10
+    min_delta: 0.05
+    verbose: True
 
 dataset:
-  root: ${hydra:runtime.cwd}/data
+  root: /mnt/newvolume/dataset
 
 hydra:
   run:
-    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}/model-tiny
   sweep:
     dir: ${hydra.run.dir}
     subdir: job${hydra.job.num}_${hydra.job.override_dirname}

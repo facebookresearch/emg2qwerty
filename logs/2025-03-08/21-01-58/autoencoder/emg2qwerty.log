@@ -1,0 +1,115 @@
+[2025-03-08 21:01:58,222][__main__][INFO] - 
+Config:
+user: user0
+dataset:
+  train:
+  - user: 43037958
+    session: 2020-12-17-1608244656-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608255062-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608257601-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608268481-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-18-1608304463-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-18-1608314177-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-18-1608311446-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608220409-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608223018-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608217769-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  val:
+  - user: 43037958
+    session: 2020-12-17-1608249257-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-18-1608306627-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  test:
+  - user: 43037958
+    session: 2020-12-17-1608247041-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  - user: 43037958
+    session: 2020-12-17-1608266139-keystrokes-dca-study@1-e041d7d9-a53b-40f3-aabc-e9714072ca46
+  root: /mnt/newvolume/dataset
+to_tensor:
+  _target_: emg2qwerty.transforms.ToTensor
+  fields:
+  - emg_left
+  - emg_right
+band_rotation:
+  _target_: emg2qwerty.transforms.ForEach
+  transform:
+    _target_: emg2qwerty.transforms.RandomBandRotation
+    offsets:
+    - -1
+    - 0
+    - 1
+temporal_jitter:
+  _target_: emg2qwerty.transforms.TemporalAlignmentJitter
+  max_offset: 120
+logspec:
+  _target_: emg2qwerty.transforms.LogSpectrogram
+  n_fft: 64
+  hop_length: 16
+specaug:
+  _target_: emg2qwerty.transforms.SpecAugment
+  n_time_masks: 3
+  time_mask_param: 25
+  n_freq_masks: 2
+  freq_mask_param: 4
+transforms:
+  train:
+  - ${to_tensor}
+  - ${band_rotation}
+  - ${temporal_jitter}
+  - ${logspec}
+  - ${specaug}
+  val:
+  - ${to_tensor}
+  - ${logspec}
+  test: ${transforms.val}
+seed: 1501
+batch_size: 32
+num_workers: 4
+train: true
+checkpoint: null
+monitor_metric: val/loss
+monitor_mode: min
+reduced: false
+autoencoder:
+  in_channels: 32
+  bottleneck_channels: 16
+  lr: 0.0001
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 8000
+  padding:
+  - 1800
+  - 200
+trainer:
+  accelerator: gpu
+  devices: 1
+  num_nodes: 1
+  max_epochs: 150
+  default_root_dir: ${hydra:runtime.output_dir}
+  precision: 16
+callbacks:
+- _target_: pytorch_lightning.callbacks.LearningRateMonitor
+- _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  dirpath: ${hydra:runtime.output_dir}/autoencoder/checkpoints
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  save_last: true
+  verbose: true
+- _target_: pytorch_lightning.callbacks.EarlyStopping
+  monitor: ${monitor_metric}
+  mode: ${monitor_mode}
+  patience: 10
+  verbose: true
+
+[2025-03-08 21:01:58,231][__main__][INFO] - Instantiating AutoencoderModule
+[2025-03-08 21:01:58,235][__main__][INFO] - Instantiating LightningDataModule {'_target_': 'emg2qwerty.lightning.WindowedEMGDataModule', 'window_length': 8000, 'padding': [1800, 200]}
+[2025-03-08 21:01:58,284][__main__][INFO] - Using model: autoencoder

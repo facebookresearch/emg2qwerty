@@ -1,0 +1,4 @@
+- user=joined_users
+- model=tds_conv_ctc_autoencoder_tiny
+- checkpoint=checkpoints/model-autoencoder-tiny/model-autoencoder-tiny-e_epoch_144-val_CER_0.0000.ckpt
+- train=False

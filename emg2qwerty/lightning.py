@@ -312,7 +312,7 @@ class AutoencoderModule(pl.LightningModule):
         loss = F.mse_loss(reconstructed, inputs)
         metrics = self.metrics[f"{phase}_metrics"]
         metrics.update(loss, N)
-        self.log(f"Autoencoder {phase}/loss", loss, batch_size=N, sync_dist=True)
+        self.log(f"{phase}/loss", loss, batch_size=N, sync_dist=True)
         return loss
 
     def configure_optimizers(self):
@@ -340,3 +340,175 @@ class AutoencoderModule(pl.LightningModule):
 
     def on_test_epoch_end(self) -> None:
         self._epoch_end("test")
+
+
+class TDSConvCTCWithAutoencoderModule(pl.LightningModule):
+    NUM_BANDS: ClassVar[int] = 2
+
+    def __init__(
+        self,
+        in_features: int,
+        mlp_features: Sequence[int],
+        block_channels: Sequence[int],
+        kernel_width: int,
+        electrode_channels: int,
+        optimizer: DictConfig,
+        lr_scheduler: DictConfig,
+        decoder: DictConfig,
+        autoencoder_checkpoint: str,
+        freeze_encoder: bool = True,
+        multi_scale: bool = False,
+    ) -> None:
+        super().__init__()
+        self.save_hyperparameters()
+        self.electrode_channels = electrode_channels
+        num_features = self.NUM_BANDS * mlp_features[-1]
+
+        # Load autoencoder from checkpoint
+        autoencoder_module = AutoencoderModule()
+        checkpoint = torch.load(autoencoder_checkpoint, map_location=lambda storage, loc: storage)
+        autoencoder_module.load_state_dict(checkpoint["state_dict"])
+        self.encoder = autoencoder_module.autoencoder.encoder
+
+        # Freeze encoder weights if specified
+        if freeze_encoder:
+            for param in self.encoder.parameters():
+                param.requires_grad = False
+
+        # Model components after the autoencoder
+        # (T, N, bands=2, C=8, freq)
+        self.spectrogram_norm = SpectrogramNorm(channels=self.NUM_BANDS * self.electrode_channels)
+
+        # (T, N, bands=2, mlp_features[-1]) - in_features is now 264 (was 528)
+        self.multi_band_mlp = MultiBandRotationInvariantMLP(
+            in_features=in_features,
+            mlp_features=mlp_features,
+            num_bands=self.NUM_BANDS,
+        )
+        # (T, N, num_features)
+        self.flatten = nn.Flatten(start_dim=2)
+
+        # (T, N, num_features)
+        self.tds_encoder = TDSConvEncoder(
+            num_features=num_features,
+            block_channels=block_channels,
+            kernel_width=kernel_width,
+            multi_scale=multi_scale,
+        )
+        # (T, N, num_classes)
+        self.classifier = nn.Linear(num_features, charset().num_classes)
+        # (T, N, num_classes)
+        self.log_softmax = nn.LogSoftmax(dim=-1)
+
+        # Criterion
+        self.ctc_loss = nn.CTCLoss(blank=charset().null_class)
+
+        # Decoder
+        self.decoder = instantiate(decoder)
+
+        # Metrics
+        metrics = MetricCollection([CharacterErrorRates()])
+        self.metrics = nn.ModuleDict(
+            {
+                f"{phase}_metrics": metrics.clone(prefix=f"{phase}/")
+                for phase in ["train", "val", "test"]
+            }
+        )
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        # Apply autoencoder's encoder to reduce channels
+        # inputs shape: (T, N, bands=2, channels=16, freq)
+        T, N, B, C, F = inputs.shape
+
+        # The encoder expects [batch, bands*channels, height, width] format for Conv2d
+        # Need to reshape to match how the autoencoder was trained
+        # First transpose to get bands and channels together, then add a dummy dimension
+        inputs_reshaped = inputs.permute(0, 1, 3, 2, 4).reshape(T * N, C * B, 1, F)
+
+        # Apply encoder - this expects 32 input channels (2 bands * 16 electrode channels)
+        encoded = self.encoder(inputs_reshaped)
+
+        # Reshape back to the original format but with bottleneck channels
+        _, bottleneck_channels, _, F_out = encoded.shape
+        # Reshape back to (T, N, bands=2, reduced_channels, freq)
+        encoded = encoded.reshape(T, N, bottleneck_channels // B, B, F_out).permute(0, 1, 3, 2, 4)
+
+        # Continue with normal processing
+        x = self.spectrogram_norm(encoded)
+        x = self.multi_band_mlp(x)
+        x = self.flatten(x)
+        x = self.tds_encoder(x)
+        x = self.classifier(x)
+        x = self.log_softmax(x)
+        return x
+
+    def _step(self, phase: str, batch: dict[str, torch.Tensor], *args, **kwargs) -> torch.Tensor:
+        inputs = batch["inputs"]
+        targets = batch["targets"]
+        input_lengths = batch["input_lengths"]
+        target_lengths = batch["target_lengths"]
+        N = len(input_lengths)  # batch_size
+
+        emissions = self.forward(inputs)
+
+        # Shrink input lengths by an amount equivalent to the conv encoder's
+        # temporal receptive field to compute output activation lengths for CTCLoss.
+        # NOTE: This assumes the encoder doesn't perform any temporal downsampling
+        # such as by striding.
+        T_diff = inputs.shape[0] - emissions.shape[0]
+        emission_lengths = input_lengths - T_diff
+
+        loss = self.ctc_loss(
+            log_probs=emissions,  # (T, N, num_classes)
+            targets=targets.transpose(0, 1),  # (T, N) -> (N, T)
+            input_lengths=emission_lengths,  # (N,)
+            target_lengths=target_lengths,  # (N,)
+        )
+
+        # Decode emissions
+        predictions = self.decoder.decode_batch(
+            emissions=emissions.detach().cpu().numpy(),
+            emission_lengths=emission_lengths.detach().cpu().numpy(),
+        )
+
+        # Update metrics
+        metrics = self.metrics[f"{phase}_metrics"]
+        targets = targets.detach().cpu().numpy()
+        target_lengths = target_lengths.detach().cpu().numpy()
+        for i in range(N):
+            # Unpad targets (T, N) for batch entry
+            target = LabelData.from_labels(targets[: target_lengths[i], i])
+            metrics.update(prediction=predictions[i], target=target)
+
+        self.log(f"{phase}/loss", loss, batch_size=N, sync_dist=True)
+        return loss
+
+    def _epoch_end(self, phase: str) -> None:
+        metrics = self.metrics[f"{phase}_metrics"]
+        self.log_dict(metrics.compute(), sync_dist=True)
+        metrics.reset()
+
+    def training_step(self, *args, **kwargs) -> torch.Tensor:
+        return self._step("train", *args, **kwargs)
+
+    def validation_step(self, *args, **kwargs) -> torch.Tensor:
+        return self._step("val", *args, **kwargs)
+
+    def test_step(self, *args, **kwargs) -> torch.Tensor:
+        return self._step("test", *args, **kwargs)
+
+    def on_train_epoch_end(self) -> None:
+        self._epoch_end("train")
+
+    def on_validation_epoch_end(self) -> None:
+        self._epoch_end("val")
+
+    def on_test_epoch_end(self) -> None:
+        self._epoch_end("test")
+
+    def configure_optimizers(self) -> dict[str, Any]:
+        return utils.instantiate_optimizer_and_scheduler(
+            self.parameters(),
+            optimizer_config=self.hparams.optimizer,
+            lr_scheduler_config=self.hparams.lr_scheduler,
+        )

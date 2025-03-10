@@ -1,0 +1,3 @@
+- user=joined_users
+- model=tds_conv_ctc_ms_tiny
+- train=False

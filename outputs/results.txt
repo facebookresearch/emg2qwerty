@@ -1,0 +1,3 @@
+{'val_metrics': None,
+ 'test_metrics': None,
+ 'best_checkpoint': '/home/ec2-user/emg2qwerty/checkpoints/autoencoder/autoencoder-epoch=51-val_loss=0.0000.ckpt'}

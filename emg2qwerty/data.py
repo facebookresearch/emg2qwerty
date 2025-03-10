@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field, InitVar
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -119,13 +119,9 @@ class EMGSessionData:
         start_idx, end_idx = self.timestamps.searchsorted([start_t, end_t])
         return self[start_idx:end_idx]
 
-    def ground_truth(
-        self, start_t: float = -np.inf, end_t: float = np.inf
-    ) -> LabelData:
+    def ground_truth(self, start_t: float = -np.inf, end_t: float = np.inf) -> LabelData:
         if self.condition == "on_keyboard":
-            return LabelData.from_keystrokes(
-                self.keystrokes, start_t=start_t, end_t=end_t
-            )
+            return LabelData.from_keystrokes(self.keystrokes, start_t=start_t, end_t=end_t)
         else:
             return LabelData.from_prompts(self.prompts, start_t=start_t, end_t=end_t)
 
@@ -464,9 +460,7 @@ class WindowedEMGDataset(torch.utils.data.Dataset):
             ), f"Unsupported condition {self.session.condition}"
             self.session_length = len(session)
 
-        self.window_length = (
-            window_length if window_length is not None else self.session_length
-        )
+        self.window_length = window_length if window_length is not None else self.session_length
         self.stride = stride if stride is not None else self.window_length
         assert self.window_length > 0 and self.stride > 0
 
@@ -510,9 +504,7 @@ class WindowedEMGDataset(torch.utils.data.Dataset):
         return emg, labels
 
     @staticmethod
-    def collate(
-        samples: Sequence[tuple[torch.Tensor, torch.Tensor]]
-    ) -> dict[str, torch.Tensor]:
+    def collate(samples: Sequence[tuple[torch.Tensor, torch.Tensor]]) -> dict[str, torch.Tensor]:
         """Collates a list of samples into a padded batch of inputs and targets.
         Each input sample in the list should be a tuple of (input, target) tensors.
         Also returns the lengths of unpadded inputs and targets for use in loss
@@ -528,12 +520,8 @@ class WindowedEMGDataset(torch.utils.data.Dataset):
         target_batch = nn.utils.rnn.pad_sequence(targets)  # (T, N)
 
         # Lengths of unpadded input and target sequences for each batch entry
-        input_lengths = torch.as_tensor(
-            [len(_input) for _input in inputs], dtype=torch.int32
-        )
-        target_lengths = torch.as_tensor(
-            [len(target) for target in targets], dtype=torch.int32
-        )
+        input_lengths = torch.as_tensor([len(_input) for _input in inputs], dtype=torch.int32)
+        target_lengths = torch.as_tensor([len(target) for target in targets], dtype=torch.int32)
 
         return {
             "inputs": input_batch,

@@ -1,0 +1,4 @@
+- user=joined_users
+- model=tds_conv_ctc_ms_tiny
+- train=False
+- checkpoint=checkpoints/model-multi-scale-tiny/model-multi-scale-tiny-e_epoch_90-val_CER_0.0000.ckpt

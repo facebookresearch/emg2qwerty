@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
 import logging
 import os
 import pprint
@@ -13,8 +12,11 @@ from typing import Any
 
 import hydra
 import pytorch_lightning as pl
+import torch
 from hydra.utils import get_original_cwd, instantiate
 from omegaconf import DictConfig, ListConfig, OmegaConf
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from torch import set_float32_matmul_precision
 
 from emg2qwerty import transforms, utils
 from emg2qwerty.transforms import Transform
@@ -24,6 +26,7 @@ log = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="../config", config_name="base")
 def main(config: DictConfig):
+    set_float32_matmul_precision("high")
     log.info(f"\nConfig:\n{OmegaConf.to_yaml(config)}")
 
     # Add working dir to PYTHONPATH
@@ -50,10 +53,7 @@ def main(config: DictConfig):
                 for session, user in zip(sessions, users)
             ]
         else:
-            return [
-                Path(config.dataset.root).joinpath(f"{user}").joinpath(f"{session}.hdf5")
-                for session, user in zip(sessions, users)
-            ]
+            return [Path(config.dataset.root).joinpath(f"{session}.hdf5") for session in sessions]
 
     # Helper to instantiate transforms
     def _build_transform(configs: Sequence[DictConfig]) -> Transform[Any, Any]:
@@ -70,12 +70,16 @@ def main(config: DictConfig):
     )
     if config.checkpoint is not None:
         log.info(f"Loading module from checkpoint {config.checkpoint}")
-        module = module.load_from_checkpoint(
-            config.checkpoint,
-            optimizer=config.optimizer,
-            lr_scheduler=config.lr_scheduler,
-            decoder=config.decoder,
+        checkpoint = torch.load(
+            config.checkpoint, map_location=lambda storage, loc: storage, weights_only=False
         )
+        module.load_state_dict(checkpoint["state_dict"])
+        # module = module.load_from_checkpoint(
+        #     config.checkpoint,
+        #     optimizer=config.optimizer,
+        #     lr_scheduler=config.lr_scheduler,
+        #     decoder=config.decoder,
+        # )
 
     # Instantiate LightningDataModule
     log.info(f"Instantiating LightningDataModule {config.datamodule}")
@@ -94,12 +98,36 @@ def main(config: DictConfig):
 
     # Instantiate callbacks
     callback_configs = config.get("callbacks", [])
-    callbacks = [instantiate(cfg) for cfg in callback_configs]
+    callbacks: list[pl.Callback] = []
+
+    # Extract model name for checkpoint naming
+    model_name = "model-multi-scale-tiny"
+    log.info(f"Using model: {model_name}")
+
+    # Process callbacks and customize ModelCheckpoint if present
+    for cfg in callback_configs:
+        if cfg._target_ == "pytorch_lightning.callbacks.ModelCheckpoint":
+            # Customize the ModelCheckpoint callback
+            checkpoint_callback = instantiate(
+                cfg,
+                filename=f"{model_name}"
+                + "-e_{epoch:02d}-{"
+                + config.monitor_metric.replace("/", "_")
+                + "_:.4f}",
+                dirpath=f"{Path.cwd()}/checkpoints/{model_name}",
+            )
+            callbacks.append(checkpoint_callback)
+        else:
+            callbacks.append(instantiate(cfg))
 
     # Initialize trainer
     trainer = pl.Trainer(
         **config.trainer,
         callbacks=callbacks,
+        logger=[
+            TensorBoardLogger(save_dir=f"{Path.cwd()}/logs/", name=model_name),
+            CSVLogger(save_dir=f"{Path.cwd()}/logs/", name=model_name),
+        ],
     )
 
     if config.train:
@@ -113,7 +141,11 @@ def main(config: DictConfig):
         trainer.fit(module, datamodule, ckpt_path=resume_from_checkpoint)
 
         # Load best checkpoint
-        module = module.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+        checkpoint = torch.load(
+            config.checkpoint, map_location=lambda storage, loc: storage, weights_only=False
+        )
+        module.load_state_dict(checkpoint["state_dict"])
+        # module = module.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
     # Validate and test on the best checkpoint (if training), or on the
     # loaded `config.checkpoint` (otherwise)

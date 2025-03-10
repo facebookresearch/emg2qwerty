@@ -40,8 +40,12 @@ dmypy.json
 .hypothesis
 
 # Logs and checkpoints
-logs/
-lightning_logs/
+*.pt
+*.pth
+*.pth.tar
+*.pth.tar.gz
+*.pth.tar.xz
+*.pth.tar.bz2
 
 # Data
 data
@@ -50,3 +54,9 @@ bids_data
 
 # LM
 wikitext-103-raw*
+
+# Outputs
+output/
+
+# Dataset
+mnt/
