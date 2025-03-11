@@ -1,3 +1,5 @@
+[2025-03-11 09:57:12,525][__main__][INFO] - 
+Config:
 user: joined_users
 dataset:
   test:
@@ -252,7 +254,7 @@ reduced: false
 autoencoder:
   in_channels: 32
   bottleneck_channels: 16
-  lr: 0.0001
+  lr: 0.001
 datamodule:
   _target_: emg2qwerty.lightning.WindowedEMGDataModule
   window_length: 8000
@@ -280,3 +282,7 @@ callbacks:
   patience: 10
   min_delta: 0.01
   verbose: true
+
+[2025-03-11 09:57:12,558][__main__][INFO] - Instantiating AutoencoderModule
+[2025-03-11 09:57:12,564][__main__][INFO] - Instantiating LightningDataModule {'_target_': 'emg2qwerty.lightning.WindowedEMGDataModule', 'window_length': 8000, 'padding': [1800, 200]}
+[2025-03-11 09:57:12,636][__main__][INFO] - Using model: autoencoder

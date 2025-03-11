@@ -252,7 +252,7 @@ reduced: false
 autoencoder:
   in_channels: 32
   bottleneck_channels: 16
-  lr: 0.0001
+  lr: 0.001
 datamodule:
   _target_: emg2qwerty.lightning.WindowedEMGDataModule
   window_length: 8000

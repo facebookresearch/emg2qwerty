@@ -105,7 +105,7 @@ def main(config: DictConfig):
     callbacks: list[pl.Callback] = []
 
     # Extract model name for checkpoint naming
-    model_name = "autoencoder"
+    model_name = "autoencoder_lr_0.0001"
     log.info(f"Using model: {model_name}")
 
     # Process callbacks and customize ModelCheckpoint if present

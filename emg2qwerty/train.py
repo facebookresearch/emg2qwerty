@@ -101,7 +101,7 @@ def main(config: DictConfig):
     callbacks: list[pl.Callback] = []
 
     # Extract model name for checkpoint naming
-    model_name = "model-multi-scale-tiny"
+    model_name = "model-multi-scale-autoencoder-tiny"
     log.info(f"Using model: {model_name}")
 
     # Process callbacks and customize ModelCheckpoint if present
@@ -110,10 +110,8 @@ def main(config: DictConfig):
             # Customize the ModelCheckpoint callback
             checkpoint_callback = instantiate(
                 cfg,
-                filename=f"{model_name}"
-                + "-e_{epoch:02d}-{"
-                + config.monitor_metric.replace("/", "_")
-                + "_:.4f}",
+                filename=f"{model_name}-epoch{{epoch:02d}}-val_metric{{val_metric:.4f}}",
+                monitor=config.monitor_metric,
                 dirpath=f"{Path.cwd()}/checkpoints/{model_name}",
             )
             callbacks.append(checkpoint_callback)
@@ -142,7 +140,9 @@ def main(config: DictConfig):
 
         # Load best checkpoint
         checkpoint = torch.load(
-            config.checkpoint, map_location=lambda storage, loc: storage, weights_only=False
+            trainer.checkpoint_callback.best_model_path,
+            map_location=lambda storage, loc: storage,
+            weights_only=False,
         )
         module.load_state_dict(checkpoint["state_dict"])
         # module = module.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)

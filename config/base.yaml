@@ -1,7 +1,7 @@
 defaults:
   - user: joined_users
   - transforms: log_spectrogram
-  - model: tds_conv_ctc_tiny
+  - model: tds_conv_ctc_autoencoder_tiny
   - optimizer: adam
   - lr_scheduler: linear_warmup_cosine_annealing
   - decoder: ctc_greedy

@@ -1,3 +1,5 @@
+[2025-03-11 00:52:54,125][__main__][INFO] - 
+Config:
 user: joined_users
 dataset:
   test:
@@ -241,24 +243,48 @@ transforms:
   - ${to_tensor}
   - ${logspec}
   test: ${transforms.val}
+module:
+  _target_: emg2qwerty.lightning.TDSConvCTCWithAutoencoderModule
+  in_features: 264
+  mlp_features:
+  - 192
+  block_channels:
+  - 12
+  - 12
+  - 12
+  - 12
+  kernel_width: 16
+  electrode_channels: 8
+  autoencoder_checkpoint: checkpoints/autoencoder/autoencoder-epoch_51-val_loss_0.0000.ckpt
+  freeze_encoder: true
+  multi_scale: false
+datamodule:
+  _target_: emg2qwerty.lightning.WindowedEMGDataModule
+  window_length: 6000
+  padding:
+  - 1200
+  - 200
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+lr_scheduler:
+  scheduler:
+    _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+    warmup_epochs: 10
+    max_epochs: ${trainer.max_epochs}
+    warmup_start_lr: 1.0e-08
+    eta_min: 1.0e-06
+  interval: epoch
+decoder:
+  _target_: emg2qwerty.decoder.CTCGreedyDecoder
 seed: 1501
 batch_size: 32
 num_workers: 4
 train: true
 checkpoint: null
-monitor_metric: val/loss
+monitor_metric: val/CER
 monitor_mode: min
 reduced: false
-autoencoder:
-  in_channels: 32
-  bottleneck_channels: 16
-  lr: 0.0001
-datamodule:
-  _target_: emg2qwerty.lightning.WindowedEMGDataModule
-  window_length: 8000
-  padding:
-  - 1800
-  - 200
 trainer:
   accelerator: gpu
   devices: 1
@@ -269,7 +295,7 @@ trainer:
 callbacks:
 - _target_: pytorch_lightning.callbacks.LearningRateMonitor
 - _target_: pytorch_lightning.callbacks.ModelCheckpoint
-  dirpath: ${hydra:runtime.output_dir}/autoencoder/checkpoints
+  dirpath: ${hydra:runtime.output_dir}/checkpoints/model-tiny
   monitor: ${monitor_metric}
   mode: ${monitor_mode}
   save_last: true
@@ -278,5 +304,9 @@ callbacks:
   monitor: ${monitor_metric}
   mode: ${monitor_mode}
   patience: 10
-  min_delta: 0.01
+  min_delta: 0.05
   verbose: true
+
+[2025-03-11 00:52:54,136][__main__][INFO] - Instantiating LightningModule {'_target_': 'emg2qwerty.lightning.TDSConvCTCWithAutoencoderModule', 'in_features': 264, 'mlp_features': [192], 'block_channels': [12, 12, 12, 12], 'kernel_width': 16, 'electrode_channels': 8, 'autoencoder_checkpoint': 'checkpoints/autoencoder/autoencoder-epoch_51-val_loss_0.0000.ckpt', 'freeze_encoder': True, 'multi_scale': False}
+[2025-03-11 00:52:54,433][__main__][INFO] - Instantiating LightningDataModule {'_target_': 'emg2qwerty.lightning.WindowedEMGDataModule', 'window_length': 6000, 'padding': [1200, 200]}
+[2025-03-11 00:52:54,518][__main__][INFO] - Using model: model-multi-scale-autoencoder-tiny
